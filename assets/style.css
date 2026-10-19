@@ -266,12 +266,3 @@ dialog.pm[open]{animation:pmIn .4s cubic-bezier(.2,.8,.2,1)}
 .pm .wrap{max-width:none;padding-bottom:max(28px,env(safe-area-inset-bottom,0px))}
 .pm__cta{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;background:var(--yellow);border-radius:var(--r-xl);padding:24px 28px;font:800 clamp(20px,2.4vw,30px)/1.1 var(--f-display);letter-spacing:-.02em}
 @media(max-width:700px){dialog.pm{width:100%;height:100%;border-radius:0}.pm__bar{padding-left:16px}.pm__cta{padding:20px}}
-
-/* ===== v4: горизонтальное видео на вертикальном экране — целиком, фон из размытой копии ===== */
-.intro__bg{display:none}
-.intro .intro__in{z-index:2}
-@media (max-aspect-ratio: 1/1){
-  .intro > video:not(.intro__bg){inset:auto;top:calc(var(--navh,76px) + 20px);left:0;right:0;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;z-index:1;box-shadow:0 20px 50px rgba(0,0,0,.35)}
-  .intro__bg{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:blur(28px) saturate(1.25) brightness(.85);transform:scale(1.2);pointer-events:none}
-  .intro::after{z-index:0}
-}

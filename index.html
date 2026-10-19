@@ -33,15 +33,6 @@
   });
   if(/^#m-/.test(location.hash))open(location.hash.slice(3));
 })();
-(function(){
-  var main=document.querySelector('.intro > video');if(!main||!window.matchMedia)return;
-  var mq=matchMedia('(max-aspect-ratio: 1/1)'),bg=null;
-  function ensure(){
-    if(mq.matches&&!bg){bg=main.cloneNode(false);bg.className='intro__bg';bg.setAttribute('aria-hidden','true');bg.muted=true;main.parentNode.insertBefore(bg,main);var p=bg.play();if(p&&p.catch)p.catch(function(){});}
-  }
-  ensure();if(mq.addEventListener)mq.addEventListener('change',ensure);
-  setInterval(function(){if(bg&&!bg.paused&&Math.abs(bg.currentTime-main.currentTime)>.35){try{bg.currentTime=main.currentTime;}catch(e){}}},2000);
-})();
 
 </script>
 </body></html>
