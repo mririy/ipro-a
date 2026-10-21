@@ -280,3 +280,9 @@ dialog.pm[open]{animation:pmIn .4s cubic-bezier(.2,.8,.2,1)}
 .group--mint .feat__ic{background:var(--deep);color:var(--yellow)}
 .list .dot{background:var(--sky)}
 .blist .ic{color:var(--green)}
+
+/* ===== плитки программ: отдельные цвета под пару к палитре школы ===== */
+.tile[data-k=kindergarten],.dhero[data-k=kindergarten]{background:var(--yellow);color:var(--ink)}
+.tile[data-k=primary],.dhero[data-k=primary]{background:#E8603F;color:#fff}
+.tile[data-k=middle],.dhero[data-k=middle]{background:#13887A;color:#fff}
+.tile[data-k=senior],.dhero[data-k=senior]{background:var(--deep);color:#fff}
