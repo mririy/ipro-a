@@ -286,3 +286,10 @@ dialog.pm[open]{animation:pmIn .4s cubic-bezier(.2,.8,.2,1)}
 .tile[data-k=primary],.dhero[data-k=primary]{background:#E8603F;color:#fff}
 .tile[data-k=middle],.dhero[data-k=middle]{background:#13887A;color:#fff}
 .tile[data-k=senior],.dhero[data-k=senior]{background:var(--deep);color:#fff}
+
+/* ===== единая система цвета: плитки по возрастанию (светлее → темнее) ===== */
+.tile[data-k=primary],.dhero[data-k=primary]{background:#CFE5F6;color:var(--deep)}
+.tile[data-k=middle],.dhero[data-k=middle]{background:var(--green);color:#fff}
+.tile[data-k=senior],.dhero[data-k=senior]{background:var(--deep);color:#fff}
+.tile[data-k=kindergarten] .tile__go,.tile[data-k=primary] .tile__go{background:var(--deep);color:#fff}
+.stat:nth-child(2){background:#CFE5F6;color:var(--deep)}
