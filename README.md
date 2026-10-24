@@ -21,7 +21,7 @@
 | — | До скорых встреч: ночной особняк | ночь |
 | — | Запись на пробные дни, контакты, карта | ночь |
 
-Тексты подводок — в `LEADINS` в `gen/content.py`.
+Тексты подводок и 3D-иллюстрации к ним — в `LEADINS` в `gen/content.py`. Иллюстрации лежат в `assets/img/3d/` — это [Microsoft Fluent Emoji 3D](https://github.com/microsoft/fluentui-emoji), лицензия MIT (`assets/img/3d/LICENSE-fluent-emoji.txt`); чтобы заменить картинку, положите свой `.webp` с тем же именем.
 
 ## Как опубликовать
 

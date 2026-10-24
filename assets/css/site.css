@@ -238,7 +238,8 @@ html.modal-open{overflow:hidden}
 
 /* ---------- объявления ---------- */
 .news{gap:24px}
-.news__head{display:grid;gap:10px;justify-items:start}
+.news__head{display:grid;gap:12px;justify-items:start}
+.news__head .li__3d{--w:clamp(60px,5vw,80px)}
 .news__head .h3{font-size:clamp(24px,2.2vw,34px)}
 .news__list{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(280px,1fr);gap:16px}
 @media (max-width:700px){.news__list{grid-auto-columns:82%}}
@@ -256,14 +257,34 @@ html.modal-open{overflow:hidden}
 .news__more .i{width:16px;height:16px}
 
 /* =====================================================================
-   ПОДВОДКИ К БЛОКАМ: время дня крупно и короткая фраза
+   ПОДВОДКИ К БЛОКАМ: 3D-иллюстрация, время дня крупно и короткая фраза
+   (иллюстрации — Microsoft Fluent Emoji 3D, лицензия MIT)
    ===================================================================== */
-.li{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 18px;margin:0}
+.li{display:flex;align-items:center;gap:clamp(20px,2.6vw,36px);margin:0}
+.li__txt{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 18px;margin:0;min-width:0}
 .li__t{font-size:clamp(52px,6.4vw,104px);font-weight:800;letter-spacing:-.06em;line-height:.85;font-variant-numeric:tabular-nums;color:var(--accent)}
 .li__s{font-size:clamp(20px,1.9vw,27px);font-weight:750;letter-spacing:-.025em;line-height:1.15;color:var(--fg)}
 .li--plain .li__s{display:inline-flex;align-items:center;gap:12px;color:var(--muted)}
-.li--plain .li__s::before{content:"";width:30px;height:3px;border-radius:3px;background:var(--accent);flex:none}
-@media (max-width:600px){.li{gap:2px 14px}.li__t{font-size:clamp(48px,15vw,64px)}.li__s{font-size:19px}}
+.li--plain:not(:has(.li__3d)) .li__s::before{content:"";width:30px;height:3px;border-radius:3px;background:var(--accent);flex:none}
+.li--plain .li__s{font-size:clamp(21px,2.1vw,30px);color:var(--fg)}
+/* 3D: главная иллюстрация и маленькие рядом, мягко покачиваются */
+.li__3d{--w:clamp(84px,9vw,140px);position:relative;flex:none;width:var(--w);height:var(--w)}
+.li--plain .li__3d{--w:clamp(72px,7vw,112px)}
+.li__3d::before{content:"";position:absolute;inset:4%;border-radius:50%;background:radial-gradient(closest-side,color-mix(in srgb,var(--accent) 40%,transparent),transparent 74%);filter:blur(5px)}
+.li__o{position:absolute;object-fit:contain;filter:drop-shadow(0 14px 18px rgba(6,24,48,.28))}
+.li__o--0{left:0;top:0;width:100%;height:100%;rotate:-6deg;animation:bob 6s ease-in-out infinite}
+.li__o--1{right:-16%;bottom:-8%;width:50%;height:50%;rotate:12deg;animation:bob 6s ease-in-out -2s infinite}
+.li__o--2{left:-6%;bottom:-6%;width:40%;height:40%;rotate:-14deg;animation:bob 6s ease-in-out -4s infinite}
+@keyframes bob{0%,100%{translate:0 0}50%{translate:0 -8px}}
+@media (max-width:600px){
+  .li{gap:20px}
+  .li__txt{gap:2px 14px}
+  .li__t{font-size:clamp(48px,15vw,64px)}
+  .li__s{font-size:19px}
+  .li--plain .li__s{font-size:21px}
+  .li__3d{--w:76px}
+  .li--plain .li__3d{--w:64px}
+}
 
 /* ---------- питание: крупная «4» и наклейки ---------- */
 .big4{display:flex;align-items:center;gap:16px;margin-top:6px}
@@ -849,6 +870,7 @@ html.a11y .news__card.is-pin{background:#fff !important;color:#000 !important}
 html.a11y .news__card.is-pin p,html.a11y .news__card.is-pin .news__meta,html.a11y .news__card.is-pin .news__more{color:#000 !important}
 html.a11y a{text-decoration:underline}
 html.a11y .review{rotate:0deg}
+html.a11y .li__3d::before{display:none}
 
 html.a11y .more{background:#000 !important;color:#fff !important}
 html.a11y .intro .h1,html.a11y .intro .kicker{color:#fff}

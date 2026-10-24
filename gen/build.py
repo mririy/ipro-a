@@ -79,12 +79,16 @@ SHORT = {'news': 'Новости', 'programs': 'Программы', 'extra': '�
 
 
 def li(key):
-    """Подводка к блоку: время дня крупно и короткая фраза."""
+    """Подводка к блоку: 3D-иллюстрация, время дня крупно и короткая фраза."""
     if key not in LEADINS:
         return ''
-    t, phrase = LEADINS[key]
+    t, phrase, ills = LEADINS[key]
     tm = f'<span class="li__t" data-time="{e(t)}">{e(t)}</span>' if t else ''
-    return f'<p class="li rv{"" if t else " li--plain"}">{tm}<span class="li__s">{e(phrase)}</span></p>'
+    art = ''
+    if ills:
+        imgs = ''.join(f'<img class="li__o li__o--{i}" src="assets/img/3d/{n}.webp" alt="" loading="lazy">' for i, n in enumerate(ills))
+        art = f'<span class="li__3d" aria-hidden="true">{imgs}</span>'
+    return f'<div class="li rv{"" if t else " li--plain"}">{art}<p class="li__txt">{tm}<span class="li__s">{e(phrase)}</span></p></div>'
 
 
 def section(id_, pal, title, num, body, cls='', extra=''):
@@ -164,7 +168,7 @@ def news():
     cards = ''.join(news_card(n) for n in NEWS_SEED)
     data = json.dumps(NEWS_SEED, ensure_ascii=False)
     body = f'''  <div class="wrap news">
-    <div class="news__head"><h2 class="h3">Новости и объявления</h2></div>
+    <div class="news__head">{li('news')}<h2 class="h3">Новости и объявления</h2></div>
     <div class="news__list hs" id="newsList">{cards}</div>
   </div>
   <script type="application/json" id="newsSeed">{data}</script>'''
@@ -187,7 +191,7 @@ def concept():
     groups = ''.join(f'<div class="feat__g"><h3 class="feat__t">{e(title)}</h3>{sl(items)}</div>' for title, items in c['groups'])
     body = f'''  <div class="wrap">
     <div class="split">
-      <div class="sh">{h2(c['title'], c['title_em'])}<p class="lead rv">{e(c['lead'])}</p></div>
+      <div class="sh">{li('concept')}{h2(c['title'], c['title_em'])}<p class="lead rv">{e(c['lead'])}</p></div>
       <div class="stack rv" aria-hidden="true">
         <div class="stack__a" data-par="-0.05"><img src="assets/img/facade.jpg" alt="" loading="lazy"></div>
         <div class="stack__b" data-par="0.07"><img src="assets/img/paint.jpg" alt="" loading="lazy"></div>
@@ -280,7 +284,7 @@ def teachers():
     t = TEACHERS
     cards = ''.join(f'<figure class="person rv"><span class="person__ph"><img src="assets/img/{img}.jpg" alt="{e(name)}" loading="lazy"></span><figcaption><b>{e(name)}</b><span>{e(role)}</span></figcaption></figure>' for img, name, role in t['people'])
     body = f'''  <div class="wrap">
-    <div class="sh">{h2('Взрослые', 'рядом')}<h3 class="sub-h rv">{e(t['title'])} {e(t['title_em'])}</h3></div>
+    <div class="sh">{li('teachers')}{h2('Взрослые', 'рядом')}<h3 class="sub-h rv">{e(t['title'])} {e(t['title_em'])}</h3></div>
     <div class="people">{cards}</div>
   </div>'''
     return section('teachers', 'blue', 'Педагоги', '05', body)
@@ -441,7 +445,7 @@ def signup():
     c = CONTACTS
     body = f'''  <div class="wrap">
     <div class="split split--signup">
-      <div class="sh">{h2(s['title'], s['title_em'])}<p class="lead rv">{e(s['lead'])}</p></div>
+      <div class="sh">{li('signup')}{h2(s['title'], s['title_em'])}<p class="lead rv">{e(s['lead'])}</p></div>
       <div class="formcard rv">
         <form class="form" id="signupForm" novalidate data-endpoint="">
           <label class="field" for="f-name"><span>Имя <i>*</i></span><input id="f-name" name="name" autocomplete="name" placeholder="Как вас зовут" required><small class="field__err">Напишите имя, чтобы мы знали, к кому обращаться.</small></label>
