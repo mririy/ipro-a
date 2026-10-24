@@ -270,13 +270,42 @@ html.modal-open{overflow:hidden}
 .li--plain:not(:has(.li__3d)) .li__s::before{content:"";width:30px;height:3px;border-radius:3px;background:var(--accent);flex:none}
 @keyframes bob{0%,100%{translate:0 0}50%{translate:0 -6px}}
 @media (max-width:600px){.li{gap:12px}.li__3d{width:48px}.li--art .li__3d{width:56px}.li__t{font-size:24px}.li__s{font-size:16.5px}}
-/* плитки фактов 2 в ряд: 3D-иконка и подпись (концепция, безопасность) */
-.tl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.tl li{display:grid;align-content:start;gap:10px;padding:14px 14px 16px;border-radius:22px;background:var(--card);box-shadow:0 10px 26px rgba(10,44,85,.07),inset 0 0 0 1px var(--line)}
-.tl__3d{width:44px;height:44px;object-fit:contain;filter:drop-shadow(0 6px 8px rgba(6,24,48,.18))}
-.tl span{font-size:15.5px;font-weight:650;letter-spacing:-.01em;line-height:1.3;text-wrap:pretty}
-.pal-deep .tl li,.sc.pal-deep .tl li{box-shadow:inset 0 0 0 1px var(--line)}
-@media (max-width:600px){.tl{gap:8px}.tl li{padding:12px 12px 14px;border-radius:18px;gap:8px}.tl__3d{width:38px;height:38px}.tl span{font-size:14.5px}}
+/* стеклянная панель и список фактов на ней (iOS-стекло поверх фото и видео) */
+.glass{background:rgba(255,255,255,.14);-webkit-backdrop-filter:blur(22px) saturate(1.5);backdrop-filter:blur(22px) saturate(1.5);border:1px solid rgba(255,255,255,.28);border-radius:26px;box-shadow:inset 0 1px 0 rgba(255,255,255,.34),0 18px 40px rgba(4,14,30,.22)}
+.gl{display:grid;padding:4px 18px}
+.gl li{display:grid;grid-template-columns:22px minmax(0,1fr);gap:12px;align-items:start;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.16);font-size:16.5px;font-weight:650;letter-spacing:-.01em;line-height:1.32;color:#fff}
+.gl li:last-child{border-bottom:0}
+.gl .i{width:22px;height:22px;margin-top:0;padding:4px;border-radius:50%;background:var(--sun);color:var(--navy);stroke-width:3.2}
+/* фото-карточка: снимок на всю карточку, заголовок и стеклянный список снизу */
+.decks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:start}
+.deck{position:relative;isolation:isolate;display:flex;flex-direction:column;justify-content:flex-end;min-height:clamp(560px,64vh,700px);padding:16px;border-radius:36px;overflow:hidden;color:#fff;background:#1b3558;box-shadow:0 30px 60px rgba(10,44,85,.22)}
+.deck__ph{position:absolute;inset:0;z-index:-2}
+.deck__ph img{width:100%;height:100%;object-fit:cover;transform:scale(1.02)}
+.deck::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(6,20,40,0) 20%,rgba(6,20,40,.35) 55%,rgba(6,20,40,.72))}
+.deck__in{display:grid;gap:14px}
+.deck__t{margin:0 6px;font-size:clamp(28px,2.6vw,38px);font-weight:800;letter-spacing:-.045em;line-height:1;text-shadow:0 2px 18px rgba(0,0,0,.25)}
+@media (max-width:900px){
+  /* телефон: карточки по одной, при прокрутке следующая наезжает на предыдущую */
+  .decks{grid-template-columns:minmax(0,1fr);gap:22px}
+  .deck{position:sticky;top:84px;min-height:0;padding:200px 12px 12px;border-radius:30px}
+  .deck + .deck{top:98px}
+  .gl{padding:2px 16px}
+  .gl li{font-size:15.5px;padding:11px 0}
+  .deck__t{font-size:28px}
+}
+/* безопасность: видео и стеклянная панель с фактами */
+.safe{position:relative}
+.safe__media{position:relative;margin:0;aspect-ratio:16/9;max-height:78vh;width:100%;border-radius:36px;overflow:hidden;background:#0d2a4c;box-shadow:0 30px 60px rgba(0,0,0,.3)}
+.safe__media video{width:100%;height:100%;object-fit:cover}
+.safe__media .badge{left:20px;bottom:20px}
+.safe__glass{position:absolute;right:20px;top:20px;bottom:20px;width:min(42%,470px);overflow:auto;display:flex;align-items:center}
+.safe__glass .gl{width:100%}
+@media (max-width:900px){
+  .safe__media{aspect-ratio:4/3;border-radius:30px}
+  .safe__media .badge{left:14px;top:14px;bottom:auto;padding:10px 14px}
+  .safe__media .badge b{font-size:26px}
+  .safe__glass{position:relative;right:auto;top:auto;bottom:auto;width:auto;margin:-64px 10px 0;display:block;background:rgba(18,61,110,.55)}
+}
 
 /* 3D поверх фото и видео блока */
 .fl3d{position:absolute;z-index:3;width:clamp(64px,7vw,104px);height:auto;object-fit:contain;pointer-events:none;filter:drop-shadow(0 16px 20px rgba(6,24,48,.3));animation:bob 6s ease-in-out infinite}
@@ -336,9 +365,6 @@ html.modal-open{overflow:hidden}
   .stat span{font-size:13.5px}
   .stack{height:250px}
 }
-.feat{display:grid;grid-template-columns:1fr 1fr;gap:clamp(24px,3vw,40px)}
-.feat__g{display:grid;gap:14px;align-content:start}
-@media (max-width:900px){.feat{grid-template-columns:1fr}}
 
 /* =====================================================================
    02 · О ШКОЛЕ — пролёт по 3D-макету (покадровая сцена)
@@ -865,13 +891,16 @@ html.a11y .seq{height:auto}
 html.a11y .seq__stage{position:relative;height:auto;padding-block:40px}
 html.a11y .seq__frame canvas{display:none}
 html.a11y .seq__poster{opacity:1 !important}
-html.a11y .price,html.a11y .tl li,html.a11y .qa,html.a11y .news__card,html.a11y .guest,html.a11y .ep{box-shadow:inset 0 0 0 2px #000 !important;background:#fff !important;color:#000 !important}
+html.a11y .price,html.a11y .qa,html.a11y .news__card,html.a11y .guest,html.a11y .ep{box-shadow:inset 0 0 0 2px #000 !important;background:#fff !important;color:#000 !important}
 html.a11y .news__card.is-pin{background:#fff !important;color:#000 !important}
 html.a11y .news__card.is-pin p,html.a11y .news__card.is-pin .news__meta,html.a11y .news__card.is-pin .news__more{color:#000 !important}
 html.a11y a{text-decoration:underline}
 html.a11y .review{rotate:0deg}
 html.a11y .dirc__ph::after,html.a11y .alb__ph::after{background:rgba(0,0,0,.55)}
 html.a11y .alb__cap b,html.a11y .dirc__t{color:#fff !important}
+html.a11y .glass{background:rgba(0,0,0,.78) !important;-webkit-backdrop-filter:none;backdrop-filter:none;border-color:#fff}
+html.a11y .deck__t{color:#fff !important}
+html.a11y .deck{position:relative !important;top:auto !important}
 html.a11y .dirc__list{color:#000}
 
 html.a11y .more{background:#000 !important;color:#fff !important}

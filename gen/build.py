@@ -92,10 +92,10 @@ def li(key):
     return f'<div class="{cls}">{art}{txt}</div>'
 
 
-def tl(items, cls=''):
-    """Плитки 2 в ряд: 3D-иконка и подпись — для списков фактов (концепция, безопасность)."""
-    lis = ''.join(f'<li><img class="tl__3d" src="assets/img/3d/{ic}.webp" alt="" aria-hidden="true" loading="lazy"><span>{e(t)}</span></li>' for ic, t in items)
-    return f'<ul class="tl rv{(" " + cls) if cls else ""}">{lis}</ul>'
+def glist(items):
+    """Список фактов на стеклянной панели: галочка и текст (тексты — как у школы)."""
+    lis = ''.join(f'<li>{I("check")}<span>{e(t)}</span></li>' for _ic, t in items)
+    return f'<ul class="gl">{lis}</ul>'
 
 
 def floats(key):
@@ -200,17 +200,14 @@ def concept():
     stats = ''.join(
         f'<div class="stat rv"><b{" data-count=" + chr(34) + re.sub(r"[^0-9]", "", n) + chr(34) if cnt else ""}>{e(n)}</b><span>{e(l)}</span></div>'
         for n, l, cnt in c['stats'])
-    groups = ''.join(f'<div class="feat__g"><h3 class="feat__t">{e(title)}</h3>{tl(items)}</div>' for title, items in c['groups'])
+    decks = ''.join(f'''<article class="deck rv">
+      <span class="deck__ph"><img src="assets/img/{ph}.jpg" alt="" loading="lazy"></span>
+      <div class="deck__in"><h3 class="deck__t">{e(title)}</h3><div class="glass">{glist(items)}</div></div>
+    </article>''' for title, ph, items in c['groups'])
     body = f'''  <div class="wrap">
-    <div class="split">
-      <div class="sh">{h2(c['title'], c['title_em'])}<p class="lead rv">{e(c['lead'])}</p></div>
-      <div class="stack rv" aria-hidden="true">
-        <div class="stack__a" data-par="-0.05"><img src="assets/img/facade.jpg" alt="" loading="lazy"></div>
-        <div class="stack__b" data-par="0.07"><img src="assets/img/paint.jpg" alt="" loading="lazy"></div>
-      </div>
-    </div>
+    <div class="sh">{h2(c['title'], c['title_em'])}<p class="lead rv">{e(c['lead'])}</p></div>
     <div class="stats">{stats}</div>
-    <div class="feat">{groups}</div>
+    <div class="decks">{decks}</div>
   </div>'''
     return section('concept', 'morning', 'Концепция', '01', body)
 
@@ -306,9 +303,9 @@ def safety():
     s = SAFETY
     body = f'''  <div class="wrap">
     <div class="sh">{li('safety')}{h2(s['title'], s['title_em'])}</div>
-    <div class="split split--safety">
-      <figure class="frame rv">{video('terr_walk', '', 'Прогулка по территории школы: башня с воротами, парковые дорожки, детская площадка')}<figcaption class="badge"><b>{e(s['area'][0])}</b>{e(s['area'][1])}</figcaption></figure>
-      {tl(s['items'])}
+    <div class="safe rv">
+      <figure class="safe__media">{video('terr_walk', '', 'Прогулка по территории школы: башня с воротами, парковые дорожки, детская площадка')}<figcaption class="badge"><b>{e(s['area'][0])}</b>{e(s['area'][1])}</figcaption></figure>
+      <div class="glass safe__glass">{glist(s['items'])}</div>
     </div>
   </div>'''
     return section('safety', 'deep', 'Безопасность', '06', body)
