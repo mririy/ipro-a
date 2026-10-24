@@ -956,11 +956,15 @@ html{background-image:none}
 /* ---------- дровер: видео стоит, первый блок наезжает листом ---------- */
 .drw{position:relative}
 .drw > .intro{position:sticky;top:0;z-index:0}
+/* текст на видео всегда светлый, какая бы глава ни была активна */
+.intro{--fg:#fff;--muted:#CFE0F3;--accent:#FCC41C;color:#fff}
 .drw > .intro .intro__media{transform:scale(calc(1 - var(--dp,0) * .07));transform-origin:50% 30%;filter:brightness(calc(1 - var(--dp,0) * .45))}
 .drw > .intro .intro__in{opacity:calc(1 - var(--dp,0) * 1.4);translate:0 calc(var(--dp,0) * -40px)}
-.drw > .intro .cue{display:none}
+.drw > .intro .cue{opacity:calc(1 - var(--dp,0) * 4)}
 .drw > .sc:not(.intro){position:relative;z-index:2;background:var(--s-bg)}
-.drw > .drw__sheet{margin-top:-30px;border-radius:30px 30px 0 0;box-shadow:0 -20px 50px rgba(4,14,30,.28)}
+/* лист не выглядывает: стоит ровно под первым экраном и выезжает только при прокрутке */
+.drw > .drw__sheet{border-radius:30px 30px 0 0}
+.drw > .drw__sheet::after{content:"";position:absolute;inset:0;border-radius:30px 30px 0 0;box-shadow:0 -18px 44px rgba(4,14,30,.3);opacity:var(--sh,0);pointer-events:none;z-index:-1}
 .drw > .drw__sheet > .wrap{padding-top:46px}
 .grab{position:absolute;left:50%;top:12px;translate:-50% 0;width:44px;height:5px;border-radius:5px;background:rgba(10,44,85,.2)}
 html:not(.js) .drw > .intro{position:relative}
@@ -1043,6 +1047,37 @@ html.rv-ready .trio__v:nth-child(2).rv.is-in{transform:none}
 /* ---------- поступление ---------- */
 .price{border-radius:28px;box-shadow:0 20px 44px rgba(4,14,30,.28)}
 .path__n{box-shadow:none}
+
+/* ---------- эмоции: фото и видео плавно «приближаются», когда появляются ---------- */
+@media (prefers-reduced-motion:no-preference){
+  html.rv-ready :is(.frame,.tile,.dirc,.alb,.person,.chero,.ep,.trio__v).rv :is(img,video){scale:1.14;transition:scale 1.8s var(--ease),transform .7s var(--ease)}
+  html.rv-ready :is(.frame,.tile,.dirc,.alb,.person,.chero,.ep,.trio__v).rv.is-in :is(img,video){scale:1}
+}
+
+/* ---------- программы: фото до краёв плитки ---------- */
+.tile__photo{right:0;top:0;bottom:0;width:44%;height:auto;aspect-ratio:auto;border-radius:0;box-shadow:none}
+.tile__photo img{height:100%}
+.tile__txt{max-width:52%}
+.tile h3{font-size:clamp(30px,3vw,46px)}
+.tile .tile__lvl{max-width:52%}
+.tile .more{position:relative;z-index:2}
+@media (max-width:860px){
+  .tile{grid-template-columns:minmax(0,1fr) 38%;padding:18px 0 18px 18px;column-gap:16px;min-height:178px}
+  .tile__photo{position:relative;grid-column:2;grid-row:1/4;width:auto;height:calc(100% + 36px);margin:-18px 0;align-self:stretch;border-radius:0;aspect-ratio:auto}
+  .tile__txt{max-width:none}
+  .tile h3{font-size:clamp(25px,7vw,34px)}
+  .tile .tile__lvl{max-width:none}
+}
+
+/* ---------- отзывы: крупная цитата родителя ---------- */
+.bigq{position:relative;display:grid;gap:22px;max-width:980px;padding-top:56px}
+.bigq::before{content:"\201C";position:absolute;left:-.04em;top:-.12em;font:900 140px/1 var(--f);color:#FCC41C}
+.bigq blockquote{font-size:clamp(26px,3.4vw,46px);font-weight:750;letter-spacing:-.03em;line-height:1.16;text-wrap:pretty;color:#fff}
+.bigq blockquote b{color:#FCC41C;font-weight:750}
+.bigq figcaption{display:flex;align-items:center;gap:12px;color:var(--muted)}
+.bigq figcaption b{display:block;color:#fff;font-weight:750}
+.bigq figcaption small{font-size:13.5px}
+@media (max-width:600px){.bigq{padding-top:44px;gap:18px}.bigq::before{font-size:110px}.bigq blockquote{font-size:27px}}
 
 /* без «объёмных» нижних кромок у плашек — плоско, как во всём сайте */
 .drawer__cta{background:#FCC41C;box-shadow:none}

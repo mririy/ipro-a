@@ -109,8 +109,18 @@
     var ask = $('.ask');
     if (ask) ask.classList.toggle('is-hidden', s.id === 'signup');
   }
+  /* активная глава — последняя (по порядку) из тех, что пересекают середину экрана:
+     видео в начале «прилипает» и пересекает её всегда, поэтому одного события «вошла» мало */
+  var crossing = [];
   var sceneIO = new IntersectionObserver(function (es) {
-    es.forEach(function (e) { if (e.isIntersecting) setActive(scenes.indexOf(e.target)); });
+    es.forEach(function (e) {
+      var k = crossing.indexOf(e.target);
+      if (e.isIntersecting && k < 0) crossing.push(e.target);
+      if (!e.isIntersecting && k >= 0) crossing.splice(k, 1);
+    });
+    var idx = -1;
+    scenes.forEach(function (s, i) { if (crossing.indexOf(s) >= 0) idx = i; });
+    if (idx >= 0) setActive(idx);
   }, { rootMargin: '-50% 0px -49% 0px' });
   scenes.forEach(function (s) { sceneIO.observe(s); });
   fadeTo(scenes[0], true);
@@ -312,11 +322,12 @@
   /* ---------------- параллакс (только компьютер) и прогресс ---------------- */
   var par = fine ? $$('[data-par]') : [];
   var ticking = false;
-  var introSec = $('.drw > .intro');
+  var introSec = $('.drw > .intro'), sheetEl = $('.drw > .drw__sheet');
   function updDrawer(vh) {
     if (!introSec) return;
     var p = clamp01(scrollY / vh);
     introSec.style.setProperty('--dp', reduce ? 0 : p.toFixed(3));
+    if (sheetEl) sheetEl.style.setProperty('--sh', Math.min(1, scrollY / 60).toFixed(2));
     if (introV) {
       if (p > 0.97) { if (!introV.paused) { introV.pause(); introV._covered = true; } }
       else if (introV._covered && introV.paused) { introV._covered = false; tryPlay(introV); }

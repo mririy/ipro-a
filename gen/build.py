@@ -373,11 +373,18 @@ def summer():
 
 def reviews():
     r = REVIEWS
-    cards = ''.join(f'<figure class="review"><blockquote>{q}</blockquote><figcaption><span class="review__ava" aria-hidden="true">{e(n[0])}</span><span><b>{e(n)}</b><small>{e(src)}</small></span></figcaption></figure>' for q, n, src in r['items'])
+    hi = r.get('hero', -1)
+    who = lambda n, src: f'<figcaption><span class="review__ava" aria-hidden="true">{e(n[0])}</span><span><b>{e(n)}</b><small>{e(src)}</small></span></figcaption>'
+    big = ''
+    if 0 <= hi < len(r['items']):
+        q, n, src = r['items'][hi]
+        big = f'<figure class="bigq rv"><blockquote>{q}</blockquote>{who(n, src)}</figure>'
+    cards = ''.join(f'<figure class="review"><blockquote>{q}</blockquote>{who(n, src)}</figure>' for i, (q, n, src) in enumerate(r['items']) if i != hi)
     stars = ''.join(I('star', 'st') for _ in range(5))
     lead = f'<p class="lead rv">{e(r["lead"])}</p>' if r.get('lead') else ''
     body = f'''  <div class="wrap">
     <div class="sh">{li('reviews')}{h2(r['title'], r['title_em'])}{lead}</div>
+    {big}
     <a class="rating rv" href="{CONTACTS['map']}" target="_blank" rel="noopener"><b>{r['rating']}</b><span class="rating__st">{stars}</span><span class="rating__t">из 5 на Яндекс Картах<span class="more">Все отзывы{I('arrow-up-right')}</span></span></a>
     <div class="carousel rv">
       <div class="carousel__track hs" tabindex="0" aria-label="Отзывы родителей">{cards}</div>
