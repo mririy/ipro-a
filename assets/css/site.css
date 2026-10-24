@@ -270,6 +270,14 @@ html.modal-open{overflow:hidden}
 .li--plain:not(:has(.li__3d)) .li__s::before{content:"";width:30px;height:3px;border-radius:3px;background:var(--accent);flex:none}
 @keyframes bob{0%,100%{translate:0 0}50%{translate:0 -6px}}
 @media (max-width:600px){.li{gap:12px}.li__3d{width:48px}.li--art .li__3d{width:56px}.li__t{font-size:24px}.li__s{font-size:16.5px}}
+/* плитки фактов 2 в ряд: 3D-иконка и подпись (концепция, безопасность) */
+.tl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.tl li{display:grid;align-content:start;gap:10px;padding:14px 14px 16px;border-radius:22px;background:var(--card);box-shadow:0 10px 26px rgba(10,44,85,.07),inset 0 0 0 1px var(--line)}
+.tl__3d{width:44px;height:44px;object-fit:contain;filter:drop-shadow(0 6px 8px rgba(6,24,48,.18))}
+.tl span{font-size:15.5px;font-weight:650;letter-spacing:-.01em;line-height:1.3;text-wrap:pretty}
+.pal-deep .tl li,.sc.pal-deep .tl li{box-shadow:inset 0 0 0 1px var(--line)}
+@media (max-width:600px){.tl{gap:8px}.tl li{padding:12px 12px 14px;border-radius:18px;gap:8px}.tl__3d{width:38px;height:38px}.tl span{font-size:14.5px}}
+
 /* 3D поверх фото и видео блока */
 .fl3d{position:absolute;z-index:3;width:clamp(64px,7vw,104px);height:auto;object-fit:contain;pointer-events:none;filter:drop-shadow(0 16px 20px rgba(6,24,48,.3));animation:bob 6s ease-in-out infinite}
 .fl3d--0{right:-2%;top:-7%;rotate:10deg}
@@ -318,8 +326,18 @@ html.modal-open{overflow:hidden}
 .stat:last-child b{font-size:clamp(30px,3vw,48px)}
 .stat span{font-size:14.5px;color:var(--muted);max-width:22ch}
 @media (max-width:860px){.stats{grid-template-columns:1fr 1fr}.stat:nth-child(3){border-left:0;padding-left:0}.stat:nth-child(n+3){border-top:1px solid var(--line)}}
+@media (max-width:600px){
+  /* телефон: цифры компактнее, «8.30–18.00» в одну строку, фото концепции ниже */
+  .stat{padding:18px 14px 20px 0;gap:6px}
+  .stat + .stat{padding-left:14px}
+  .stat:nth-child(3){padding-left:0}
+  .stat b{font-size:36px}
+  .stat:last-child b{font-size:25px;letter-spacing:-.04em;white-space:nowrap}
+  .stat span{font-size:13.5px}
+  .stack{height:250px}
+}
 .feat{display:grid;grid-template-columns:1fr 1fr;gap:clamp(24px,3vw,40px)}
-.feat__g{display:grid;gap:16px;align-content:start}
+.feat__g{display:grid;gap:14px;align-content:start}
 @media (max-width:900px){.feat{grid-template-columns:1fr}}
 
 /* =====================================================================
@@ -446,8 +464,8 @@ html.modal-open{overflow:hidden}
 /* =====================================================================
    06 · БЕЗОПАСНОСТЬ
    ===================================================================== */
-.split--safety{align-items:start}
-.split--safety .frame{aspect-ratio:4/5;border-color:rgba(255,255,255,.9)}
+.split--safety{align-items:center}
+.split--safety .frame{aspect-ratio:4/3;border-color:rgba(255,255,255,.9)}
 .badge{position:absolute;left:16px;bottom:16px;display:grid;gap:2px;padding:14px 18px;border-radius:20px;background:rgba(255,255,255,.92);color:var(--navy);font-weight:600;font-size:14px;max-width:calc(100% - 32px)}
 .badge b{font-size:34px;font-weight:900;letter-spacing:-.05em;line-height:1}
 @media (max-width:900px){.split--safety .frame{aspect-ratio:4/3}}
@@ -847,12 +865,14 @@ html.a11y .seq{height:auto}
 html.a11y .seq__stage{position:relative;height:auto;padding-block:40px}
 html.a11y .seq__frame canvas{display:none}
 html.a11y .seq__poster{opacity:1 !important}
-html.a11y .price,html.a11y .dirc,html.a11y .alb,html.a11y .qa,html.a11y .news__card,html.a11y .guest,html.a11y .ep{box-shadow:inset 0 0 0 2px #000 !important;background:#fff !important;color:#000 !important}
+html.a11y .price,html.a11y .tl li,html.a11y .qa,html.a11y .news__card,html.a11y .guest,html.a11y .ep{box-shadow:inset 0 0 0 2px #000 !important;background:#fff !important;color:#000 !important}
 html.a11y .news__card.is-pin{background:#fff !important;color:#000 !important}
 html.a11y .news__card.is-pin p,html.a11y .news__card.is-pin .news__meta,html.a11y .news__card.is-pin .news__more{color:#000 !important}
 html.a11y a{text-decoration:underline}
 html.a11y .review{rotate:0deg}
 html.a11y .dirc__ph::after,html.a11y .alb__ph::after{background:rgba(0,0,0,.55)}
+html.a11y .alb__cap b,html.a11y .dirc__t{color:#fff !important}
+html.a11y .dirc__list{color:#000}
 
 html.a11y .more{background:#000 !important;color:#fff !important}
 html.a11y .intro .h1,html.a11y .intro .kicker{color:#fff}

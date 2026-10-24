@@ -92,6 +92,12 @@ def li(key):
     return f'<div class="{cls}">{art}{txt}</div>'
 
 
+def tl(items, cls=''):
+    """Плитки 2 в ряд: 3D-иконка и подпись — для списков фактов (концепция, безопасность)."""
+    lis = ''.join(f'<li><img class="tl__3d" src="assets/img/3d/{ic}.webp" alt="" aria-hidden="true" loading="lazy"><span>{e(t)}</span></li>' for ic, t in items)
+    return f'<ul class="tl rv{(" " + cls) if cls else ""}">{lis}</ul>'
+
+
 def floats(key):
     """3D-иллюстрации поверх фото или видео блока."""
     return ''.join(f'<img class="fl3d fl3d--{i}" src="assets/img/3d/{n}.webp" alt="" aria-hidden="true" loading="lazy">' for i, n in enumerate(FLOATS.get(key, ())))
@@ -194,14 +200,13 @@ def concept():
     stats = ''.join(
         f'<div class="stat rv"><b{" data-count=" + chr(34) + re.sub(r"[^0-9]", "", n) + chr(34) if cnt else ""}>{e(n)}</b><span>{e(l)}</span></div>'
         for n, l, cnt in c['stats'])
-    groups = ''.join(f'<div class="feat__g"><h3 class="feat__t">{e(title)}</h3>{sl(items)}</div>' for title, items in c['groups'])
+    groups = ''.join(f'<div class="feat__g"><h3 class="feat__t">{e(title)}</h3>{tl(items)}</div>' for title, items in c['groups'])
     body = f'''  <div class="wrap">
     <div class="split">
       <div class="sh">{h2(c['title'], c['title_em'])}<p class="lead rv">{e(c['lead'])}</p></div>
       <div class="stack rv" aria-hidden="true">
         <div class="stack__a" data-par="-0.05"><img src="assets/img/facade.jpg" alt="" loading="lazy"></div>
         <div class="stack__b" data-par="0.07"><img src="assets/img/paint.jpg" alt="" loading="lazy"></div>
-        {floats('concept')}
       </div>
     </div>
     <div class="stats">{stats}</div>
@@ -303,7 +308,7 @@ def safety():
     <div class="sh">{li('safety')}{h2(s['title'], s['title_em'])}</div>
     <div class="split split--safety">
       <figure class="frame rv">{video('terr_walk', '', 'Прогулка по территории школы: башня с воротами, парковые дорожки, детская площадка')}<figcaption class="badge"><b>{e(s['area'][0])}</b>{e(s['area'][1])}</figcaption></figure>
-      {sl(s['items'])}
+      {tl(s['items'])}
     </div>
   </div>'''
     return section('safety', 'deep', 'Безопасность', '06', body)
