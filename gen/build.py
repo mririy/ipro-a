@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-"""Собирает index.html сайта IPROSCHOOL, версия A: сторителл по часам, как на сайте ХОЧУ
-(«Знакомо?» — обычный будний день, «Тот же день, но в Ай Про»)."""
+"""Собирает index.html сайта IPROSCHOOL, версия A: день в Ай Про — подводки к блокам по часам
+(08:30 уроки, 12:40 обед, 14:30 после уроков, 18:00 домой)."""
 import html, json, os, re, sys, hashlib, shutil
 sys.path.insert(0, os.path.dirname(__file__))
 from content import *  # noqa
@@ -75,11 +75,20 @@ def video(name, cls='', label='', autoplay=False, poster=None):
 
 
 # короткие подписи главы в капсуле на телефоне (полная не помещается)
-SHORT = {'news': 'Новости', 'problem': 'Знакомо?', 'day': 'День в Ай Про', 'programs': 'Программы',
-         'extra': 'Кружки', 'act-night': 'До встречи', 'signup': 'Запись'}
+SHORT = {'news': 'Новости', 'programs': 'Программы', 'extra': 'Кружки', 'act-night': 'До встречи', 'signup': 'Запись'}
+
+
+def li(key):
+    """Подводка к блоку: время дня крупно и короткая фраза."""
+    if key not in LEADINS:
+        return ''
+    t, phrase = LEADINS[key]
+    tm = f'<span class="li__t" data-time="{e(t)}">{e(t)}</span>' if t else ''
+    return f'<p class="li rv{"" if t else " li--plain"}">{tm}<span class="li__s">{e(phrase)}</span></p>'
 
 
 def section(id_, pal, title, num, body, cls='', extra=''):
+    num = LEADINS.get(id_, ('', ''))[0]  # в капсуле — время дня вместо номера сцены
     if id_ in SHORT:
         extra += f' data-short="{e(SHORT[id_])}"'
     return (f'<section class="sc pal-{pal}{(" " + cls) if cls else ""}" id="{id_}" data-title="{e(title)}" data-num="{e(num)}"{extra}>\n'
@@ -146,85 +155,9 @@ def intro():
     <p class="kicker up">{e(INTRO['eyebrow'])}</p>
     <h1 class="h1">{h.strip()}</h1>
   </div>
-  <a class="cue" href="#problem">Листайте{I('arrow-down')}</a>'''
+  <a class="cue" href="#news">Листайте{I('arrow-down')}</a>'''
     return section('top', 'dawn', 'Начало', '00', body, 'intro')
 
-
-def ntf(card, cls=''):
-    """Уведомление в истории «Знакомо?»: иконка, заголовок, текст."""
-    at, ic, t, sub, x, y, r = card
-    return f'<div class="ntf{(" " + cls) if cls else ""}" data-at="{at}" style="--x:{x}%;--y:{y}%;--r:{r}deg">{I(ic)}<b>{e(t)}</b><small>{e(sub)}</small></div>'
-
-
-def clock(first, label, rng):
-    a, b = rng
-    return (f'<div class="clock"><span class="clock__t" data-clock>{e(first)}</span><small>{e(label)}</small>'
-            f'<span class="dayline"><i></i><em>{e(a)}</em><em>{e(b)}</em></span></div>')
-
-
-def story_problem():
-    S = STORY_PROBLEM
-    floats = ''.join(ntf(c) for c in S['cards'])
-    steps = ''
-    for i, (t, line) in enumerate(S['steps']):
-        tag = 'h2' if i == 0 else 'p'
-        inline = ''.join(ntf(c, 'ntf--in') for c in S['cards'] if c[0] == i)
-        steps += (f'<li class="sstep" data-step="{i}" data-time="{e(t)}"><p class="sstep__t">{e(t)}</p>'
-                  f'<{tag} class="sstep__l">{e(line)}</{tag}><div class="sstep__cards" aria-hidden="true">{inline}</div></li>')
-    p1, p2 = S['punch']
-    body = f'''  <div class="wrap">
-    <p class="kicker">{e(S['kicker'])}</p>
-    <div class="story__seq" data-story data-from="{S['range'][0]}" data-to="{S['range'][1]}">
-      <div class="story__col" aria-hidden="true">{clock(S['steps'][0][0], S['label'], S['range'])}{floats}</div>
-      <ol class="story__steps">{steps}</ol>
-    </div>
-    <p class="punch" data-split>{e(p1)} <em>{e(p2)}</em></p>
-  </div>'''
-    return section('problem', 'night2', 'Знакомо?', '', body, 'story story--problem')
-
-
-def day_card(kind, i):
-    D = STORY_DAY
-    if kind in ('bus', 'home'):
-        a, b = (I('house'), I('school')) if kind == 'bus' else (I('school'), I('house'))
-        t, sub = (('Трансфер до школы', 'по запросу · входит в стоимость') if kind == 'bus'
-                  else ('Трансфер развозит по домам', 'или заберите ребёнка до 18:00'))
-        inner = (f'<div class="dc__route"><span class="dc__pt">{a}</span><i class="dc__dash"><span class="dc__bus">{I("bus")}</span></i>'
-                 f'<span class="dc__pt dc__pt--to">{b}</span></div><b>{e(t)}</b><span>{e(sub)}</span>')
-    elif kind == 'group':
-        seats = ''.join('<i></i>' for _ in range(14))
-        inner = f'<div class="dc__seats">{seats}</div><b>До 14 детей в группе</b><span>английский и китайский — в программе</span>'
-    elif kind == 'food':
-        inner = (f'<span class="dc__ph"><img src="assets/img/food.jpg" alt="" loading="lazy"></span>'
-                 f'<b>Горячее питание 4 раза в день</b><span>шведский стол, своя кухня</span>')
-    elif kind == 'clubs':
-        chips = ''.join(f'<span>{e(c)}</span>' for c in D['clubs'])
-        inner = (f'<div class="dc__chips">{chips}</div><p class="dc__hw">{I("check")}Домашнее задание сделано</p>'
-                 f'<b>Кружки — в этом же здании</b><span>все направления под одной крышей</span>')
-    else:  # park
-        inner = (f'<span class="dc__ph"><img src="assets/img/playground.jpg" alt="" loading="lazy"></span>'
-                 f'<b>1 га охраняемого парка</b><span>площадка, бассейн, спортплощадка</span>')
-    return f'<div class="dc dc--{kind}">{inner}</div>'
-
-
-def story_day():
-    D = STORY_DAY
-    layers = ''.join(day_card(k, i).replace('<div class="dc ', f'<div data-layer="{i}" class="dc ', 1) for i, (_, _, k) in enumerate(D['steps']))
-    steps = ''
-    for i, (t, line, k) in enumerate(D['steps']):
-        steps += (f'<li class="sstep" data-step="{i}" data-time="{e(t)}"><p class="sstep__t">{e(t)}</p>'
-                  f'<p class="sstep__l">{e(line)}</p><div class="sstep__cards" aria-hidden="true">{day_card(k, i)}</div></li>')
-    t1, t2 = D['title']
-    p1, p2 = D['punch']
-    body = f'''  <div class="wrap">
-    {h2(t1, t2)}
-    <div class="story__seq" data-story data-from="{D['range'][0]}" data-to="{D['range'][1]}">
-      <div class="story__col story__col--day" aria-hidden="true">{clock(D['steps'][0][0], D['label'], D['range'])}<div class="dcs">{layers}</div></div>
-      <ol class="story__steps">{steps}</ol>
-    </div>
-    <p class="punch" data-split>{e(p1)} <em>{e(p2)}</em></p>
-  </div>'''
-    return section('day', 'sky', 'Тот же день в Ай Про', '', body, 'story story--day')
 
 
 def news():
@@ -272,7 +205,7 @@ def about():
     body = f'''  <div class="seq seq--estate" data-seq="estate" data-frames="61" data-path="assets/seq/estate" data-ext="webp">
     <div class="seq__stage">
       <div class="wrap seq__grid">
-        <div class="sh seq__txt">{h2(a['title'], a['title_em'])}</div>
+        <div class="sh seq__txt">{li('about')}{h2(a['title'], a['title_em'])}</div>
         <div class="seq__frame"><canvas aria-hidden="true"></canvas><img class="seq__poster" src="assets/seq/estate/f_000.webp" alt="3D-макет особняка школы"></div>
       </div>
       <div class="seq__progress" aria-hidden="true"><i></i></div>
@@ -324,7 +257,7 @@ def programs():
       {more()}
     </a>'''
     body = f'''  <div class="wrap">
-    <div class="sh">{h2(P['title'], P['title_em'])}{('<p class="lead rv">' + e(P['lead']) + '</p>') if P['lead'] else ''}</div>
+    <div class="sh">{li('programs')}{h2(P['title'], P['title_em'])}{('<p class="lead rv">' + e(P['lead']) + '</p>') if P['lead'] else ''}</div>
     <div class="tiles">{tiles}</div>
   </div>'''
     return section('programs', 'paper', 'Программы и расписание', '03', body)
@@ -332,11 +265,10 @@ def programs():
 
 def food():
     f = FOOD
-    big, rest = f['big']
     stk = ''.join(f'<span class="stk" style="--x:{x}%;--y:{y}%;--r:{r}deg">{I(ic)}{e(t)}</span>' for ic, t, x, y, r in f['stickers'])
     body = f'''  <div class="wrap">
     <div class="split split--food">
-      <div class="sh">{h2(f['title'], f['title_em'])}<p class="big4 rv"><b>{e(big)}</b><span>{e(rest)}</span></p></div>
+      <div class="sh">{li('food')}{h2(f['title'], f['title_em'])}</div>
       <div class="food__ph rv"><figure class="frame frame--tilt"><img src="assets/img/food.jpg" alt="Дети выбирают еду на шведском столе" loading="lazy"></figure>{stk}</div>
     </div>
   </div>'''
@@ -357,7 +289,7 @@ def teachers():
 def safety():
     s = SAFETY
     body = f'''  <div class="wrap">
-    <div class="sh">{h2(s['title'], s['title_em'])}</div>
+    <div class="sh">{li('safety')}{h2(s['title'], s['title_em'])}</div>
     <div class="split split--safety">
       <figure class="frame rv">{video('terr_walk', '', 'Прогулка по территории школы: башня с воротами, парковые дорожки, детская площадка')}<figcaption class="badge"><b>{e(s['area'][0])}</b>{e(s['area'][1])}</figcaption></figure>
       {sl(s['items'])}
@@ -382,7 +314,7 @@ def extra():
     </article>'''
     guests = ''.join(f'<article class="guest rv"><span class="guest__mono" aria-hidden="true">{e(n[0])}</span><div><b>{e(n)}</b><span class="guest__what">{e(w)}</span><p>{e(c)}</p></div></article>' for n, w, c in x['guests'])
     body = f'''  <div class="wrap">
-    <div class="sh">{h2(x['title'], x['title_em'])}<p class="lead rv">{e(x['lead'])}</p></div>
+    <div class="sh">{li('extra')}{h2(x['title'], x['title_em'])}<p class="lead rv">{e(x['lead'])}</p></div>
     <div class="dirs">{dirs}</div>
     <div class="meet">
       <div class="sh sh--sm"><h3 class="h2 h2--sm" data-split>{e(x['meet_title'])}</h3><p class="lead rv">{e(x['meet_lead'])}</p></div>
@@ -397,7 +329,7 @@ def transfer():
     (i1, n1), (i2, n2) = t['route']
     body = f'''  <div class="wrap">
     <div class="split split--transfer">
-      <div class="sh">{h2(t['title'], t['title_em'])}<p class="lead rv">{e(t['lead'])}</p>{sl(t['items'])}</div>
+      <div class="sh">{li('transfer')}{h2(t['title'], t['title_em'])}<p class="lead rv">{e(t['lead'])}</p>{sl(t['items'])}</div>
       <figure class="frame frame--tilt rv"><img src="assets/img/bus.jpg" alt="Микроавтобус школьного трансфера на дорожке у парка" loading="lazy"></figure>
     </div>
     <div class="route rv" data-route aria-hidden="true">
@@ -416,7 +348,7 @@ def summer():
       <div class="ep__txt"><p class="ep__k">{e(mon)}</p><h3>{e(title)}</h3><p>{text}</p></div></article>''' for n, mon, title, text, img, alt in s['episodes'])
     body = f'''  <div class="wrap">
     <div class="split split--summer">
-      <div class="sh">{h2(s['title'], s['title_em'])}<p class="lead rv">{e(s['lead'])}</p></div>
+      <div class="sh">{li('summer')}{h2(s['title'], s['title_em'])}<p class="lead rv">{e(s['lead'])}</p></div>
       <figure class="frame frame--round rv">{video('summer_yard', '', 'Летний клуб во дворе школы: рисунки мелками и танцы')}</figure>
     </div>
     <ul class="meta rv">{''.join(f'<li>{I(ic)}{e(t)}</li>' for ic, t in s['facts'])}</ul>
@@ -432,7 +364,7 @@ def reviews():
     stars = ''.join(I('star', 'st') for _ in range(5))
     lead = f'<p class="lead rv">{e(r["lead"])}</p>' if r.get('lead') else ''
     body = f'''  <div class="wrap">
-    <div class="sh">{h2(r['title'], r['title_em'])}{lead}</div>
+    <div class="sh">{li('reviews')}{h2(r['title'], r['title_em'])}{lead}</div>
     <a class="rating rv" href="{CONTACTS['map']}" target="_blank" rel="noopener"><b>{r['rating']}</b><span class="rating__st">{stars}</span><span class="rating__t">из 5 на Яндекс Картах<span class="more">Все отзывы{I('arrow-up-right')}</span></span></a>
     <div class="carousel rv">
       <div class="carousel__track hs" tabindex="0" aria-label="Отзывы родителей">{cards}</div>
@@ -448,7 +380,7 @@ def admission():
     inc = ''.join(f'<li>{I("check")}{e(t)}</li>' for t in a['included'])
     lbl, head, sub = a['cost']
     body = f'''  <div class="wrap">
-    <div class="sh">{h2(a['title'], a['title_em'])}</div>
+    <div class="sh">{li('admission')}{h2(a['title'], a['title_em'])}</div>
     <div class="adm">
       <ol class="path rv">{steps}</ol>
       <article class="price rv">
@@ -483,7 +415,7 @@ def gallery():
       {more('Смотреть')}
     </button>'''
     body = f'''  <div class="wrap">
-    <div class="sh">{h2('Фото и видео', 'школы')}</div>
+    <div class="sh">{li('gallery')}{h2('Фото и видео', 'школы')}</div>
     <div class="albs">{cards}</div>
   </div>'''
     return section('gallery', 'evening2', 'Галерея', '', body)
@@ -696,7 +628,7 @@ def asset_v(path):
 
 
 def page():
-    main = (intro() + story_problem() + story_day() + news() + concept() + about() + programs() + food() + teachers() + safety()
+    main = (intro() + news() + concept() + about() + programs() + food() + teachers() + safety()
             + extra() + transfer() + summer() + reviews() + admission() + gallery() + night() + signup())
     n = len(PROGRAMS)
     dialogs = ''.join(program_dialog(p, PROGRAMS[(i - 1) % n], PROGRAMS[(i + 1) % n]) for i, p in enumerate(PROGRAMS))

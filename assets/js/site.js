@@ -1,6 +1,6 @@
 /* =====================================================================
    Ай Про · IPROSCHOOL — сценарий сайта
-   Версия A: история по часам, как на сайте ХОЧУ («Знакомо?» → «Тот же день, но в Ай Про»),
+   Версия A: день в Ай Про — подводки к блокам по часам,
    палитры глав смешиваются кадр за кадром, покадровые сцены 3D-макета, автобус по маршруту,
    окна программ, галерея, форма записи, новости, помощник.
    ===================================================================== */
@@ -265,39 +265,25 @@
     });
   }
 
-  /* ---------------- история по часам: шаги переключают часы, полосу дня, уведомления и карточки ---------------- */
+  /* ---------------- подводки: время дня «доходит» от предыдущей подводки до своей ---------------- */
   var toMin = function (t) { var m = /^(\d{1,2}):(\d{2})$/.exec(t || ''); return m ? (+m[1]) * 60 + (+m[2]) : 0; };
-  var stories = $$('[data-story]').map(function (seq) {
-    var steps = $$('[data-step]', seq), layers = $$('[data-layer]', seq), ats = $$('.story__col [data-at]', seq);
-    var clockEl = $('[data-clock]', seq), line = $('.dayline', seq);
-    var from = toMin(seq.dataset.from), to = toMin(seq.dataset.to), cur = -1;
-    function set(n) {
-      if (n === cur) return;
-      cur = n;
-      seq.dataset.active = n;
-      steps.forEach(function (st) { st.classList.toggle('is-on', +st.dataset.step === n); });
-      layers.forEach(function (l) { l.classList.toggle('is-on', +l.dataset.layer === n); });
-      ats.forEach(function (x) { x.classList.toggle('is-in', n >= +x.dataset.at); });
-      var t = steps[n] && steps[n].dataset.time;
-      if (clockEl && t && clockEl.textContent !== t) {
-        clockEl.textContent = t;
-        if (!reduce) { clockEl.classList.remove('tick'); void clockEl.offsetWidth; clockEl.classList.add('tick'); }
-      }
-      if (line && t && to > from) line.style.setProperty('--dp', clamp01((toMin(t) - from) / (to - from)).toFixed(3));
-    }
-    set(0);
-    return { seq: seq, steps: steps, set: set };
-  });
-  function updStories() {
-    var vh = innerHeight;
-    stories.forEach(function (q) {
-      var r = q.seq.getBoundingClientRect();
-      if (r.bottom < 0 || r.top > vh) return;
-      var n = 0;
-      q.steps.forEach(function (st, i) { if (st.getBoundingClientRect().top <= vh * 0.5) n = i; });
-      q.set(+q.steps[n].dataset.step);
+  var fmtT = function (m) { m = Math.round(m); return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
+  var clocks = $$('.li__t[data-time]');
+  var clockIO = new IntersectionObserver(function (es) {
+    es.forEach(function (en) {
+      if (!en.isIntersecting) return;
+      clockIO.unobserve(en.target);
+      var el = en.target, i = clocks.indexOf(el), to = toMin(el.dataset.time);
+      var from = i > 0 ? toMin(clocks[i - 1].dataset.time) : to - 30, t0 = performance.now();
+      if (reduce || isA11y() || from >= to) return;
+      (function tick(now) {
+        var p = Math.min(1, (now - t0) / 1100);
+        el.textContent = fmtT(from + (to - from) * easeOut(p));
+        if (p < 1) requestAnimationFrame(tick); else el.textContent = el.dataset.time;
+      })(t0);
     });
-  }
+  }, { threshold: 0.6 });
+  clocks.forEach(function (el) { clockIO.observe(el); });
 
   /* ---------------- трансфер: автобус едет по маршруту ---------------- */
   var route = $('[data-route]'), rPath = route && $('.route__line', route), rDone = route && $('.route__done', route), rBus = route && $('.route__bus', route), rSvg = route && $('svg', route);
@@ -330,7 +316,7 @@
     ticking = false;
     var vh = innerHeight, max = root.scrollHeight - vh;
     if (bar) bar.style.transform = 'scaleX(' + (max > 0 ? Math.min(1, scrollY / max) : 0).toFixed(4) + ')';
-    updSeqs(); updArcs(); updRoute(); updStories();
+    updSeqs(); updArcs(); updRoute();
     if (reduce || isA11y()) return;
     par.forEach(function (el) {
       var r = el.parentElement.getBoundingClientRect();

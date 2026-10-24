@@ -1,6 +1,6 @@
 /* =====================================================================
    Ай Про · IPROSCHOOL — полный сайт, версия A
-   Сюжет по часам, как на сайте ХОЧУ: «Знакомо?» → «Тот же день, но в Ай Про».
+   День в Ай Про: подводки к блокам по часам (08:30 уроки, 12:40 обед, 14:30 после уроков, 18:00 домой).
    Палитры глав смешивает assets/js/site.js (как на сайте ХОЧУ).
    ===================================================================== */
 
@@ -47,7 +47,6 @@
 .pal-twilight { --s-bg:#1F4378; --s-fg:#FFFFFF; --s-muted:#C3D3EA; --s-accent:#FCC41C; --s-aura:#4A86CC; --s-band:rgba(255,255,255,.05); --s-card:rgba(255,255,255,.09); --s-line:rgba(255,255,255,.18); --sqbg:#FCC41C; --sqfg:#0A2C55; }
 .pal-evening  { --s-bg:#15325A; --s-fg:#FFFFFF; --s-muted:#B9CBE2; --s-accent:#FCC41C; --s-aura:#3D6FA8; --s-band:rgba(255,255,255,.04); --s-card:rgba(255,255,255,.08); --s-line:rgba(255,255,255,.16); --sqbg:#FCC41C; --sqfg:#0A2C55; }
 .pal-evening2 { --s-bg:#0F2645; --s-fg:#FFFFFF; --s-muted:#A9BCD6; --s-accent:#FCC41C; --s-aura:#2C5A92; --s-band:rgba(255,255,255,.035); --s-card:rgba(255,255,255,.07); --s-line:rgba(255,255,255,.15); --sqbg:#FCC41C; --sqfg:#0A2C55; }
-.pal-night2   { --s-bg:#0E1838; --s-fg:#F3F7FB; --s-muted:#A9B8D6; --s-accent:#FCC41C; --s-aura:#3B4FA0; --s-band:rgba(255,255,255,.03); --s-card:rgba(255,255,255,.07); --s-line:rgba(255,255,255,.14); --sqbg:#FCC41C; --sqfg:#0A2C55; }
 .pal-night    { --s-bg:#0B121E; --s-fg:#F3F7FB; --s-muted:#93A3B8; --s-accent:#FCC41C; --s-aura:#5A4026; --s-band:rgba(255,255,255,.025); --s-card:rgba(255,255,255,.06); --s-line:rgba(255,255,255,.12); --sqbg:#FCC41C; --sqfg:#0A2C55; }
 /* без скрипта каждая глава красит себя сама */
 html:not(.js) .sc { --bg:var(--s-bg); --fg:var(--s-fg); --muted:var(--s-muted); --accent:var(--s-accent); --aura:var(--s-aura); --band:var(--s-band); --card:var(--s-card); --line:var(--s-line); background:var(--bg); color:var(--fg); }
@@ -257,97 +256,18 @@ html.modal-open{overflow:hidden}
 .news__more .i{width:16px;height:16px}
 
 /* =====================================================================
-   СТОРИТЕЛЛ ПО ЧАСАМ (как в ХОЧУ): слева липкие часы, справа шаги дня
+   ПОДВОДКИ К БЛОКАМ: время дня крупно и короткая фраза
    ===================================================================== */
-.story > .wrap{gap:clamp(20px,4vh,40px)}
-.story__seq{display:grid;grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr);gap:clamp(24px,5vw,80px)}
-.story__col{position:sticky;top:14vh;align-self:start;height:72vh;display:grid;place-items:center}
-.clock{position:relative;z-index:2;display:grid;justify-items:start;gap:6px}
-.clock__t{font-size:clamp(88px,12vw,190px);font-weight:800;letter-spacing:-.065em;line-height:.86;font-variant-numeric:tabular-nums;color:var(--fg)}
-.story--problem .clock__t{text-shadow:0 0 60px rgba(120,160,255,.28)}
-.clock__t.tick{animation:tick .55s var(--ease)}
-@keyframes tick{from{opacity:.25;transform:translateY(.1em)}to{opacity:1;transform:none}}
-.clock small{font-size:clamp(16px,1.5vw,22px);font-weight:600;color:var(--muted);padding-left:.2em}
-/* полоса дня: сколько дня уже прошло */
-.dayline{position:relative;display:block;width:min(100%,360px);height:6px;margin-top:18px;border-radius:6px;background:color-mix(in srgb,var(--fg) 16%,transparent)}
-.dayline i{position:absolute;inset:0;border-radius:inherit;background:var(--accent);transform-origin:0 50%;transform:scaleX(var(--dp,0));transition:transform .9s var(--ease)}
-.dayline em{position:absolute;top:14px;font-style:normal;font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--muted)}
-.dayline em:first-of-type{left:0}
-.dayline em:last-of-type{right:0}
-.story--day .dayline i{background:var(--navy)}
-/* шаги */
-.story__steps{display:flex;flex-direction:column}
-.sstep{min-height:54vh;display:flex;flex-direction:column;justify-content:center;gap:14px}
-html.js .sstep{opacity:.28;transition:opacity .7s var(--ease)}
-html.js .sstep.is-on{opacity:1}
-.sstep__t{font-weight:800;font-size:15px;letter-spacing:.08em;font-variant-numeric:tabular-nums;color:var(--accent)}
-.story--day .sstep__t{color:var(--navy)}
-.sstep__l{font-size:clamp(28px,3.2vw,50px);font-weight:800;letter-spacing:-.045em;line-height:1.05;text-wrap:balance;max-width:16em}
-.sstep__cards{display:none}
-/* итоговая фраза */
-.punch{font-size:clamp(40px,5.2vw,84px);font-weight:800;letter-spacing:-.055em;line-height:.98;text-wrap:balance;max-width:13.5em;padding-block:6vh 2vh}
-.punch em{font-style:normal;color:var(--accent)}
-.story--day .punch em{color:#fff}
-/* уведомления вокруг часов: всплывают по шагам, к вечеру тускнеют */
-.ntf{position:absolute;left:var(--x);top:var(--y);display:grid;grid-template-columns:36px minmax(0,1fr);column-gap:11px;align-items:center;width:max-content;max-width:250px;padding:10px 14px 10px 10px;border-radius:18px;
-  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 24px 50px rgba(0,0,0,.4);rotate:var(--r,0deg);
-  transition:opacity .7s var(--ease),transform .7s var(--ease),filter .7s}
-.ntf .i{grid-row:span 2;width:36px;height:36px;padding:8px;border-radius:11px;background:rgba(255,255,255,.12);color:#fff}
-.ntf b{font-size:14px;font-weight:800;color:#fff;line-height:1.2}
-.ntf small{font-size:13px;line-height:1.3;color:rgba(255,255,255,.72)}
-html.js .story__col .ntf{opacity:0;transform:translateY(26px) scale(.9)}
-html.js .story__col .ntf.is-in{opacity:1;transform:none}
-html.js .story--problem [data-active="3"] .story__col .ntf.is-in{opacity:.3;filter:blur(2px) grayscale(.6);transform:translateY(10px) scale(.96)}
-.ntf--in{position:static;rotate:0deg;max-width:100%}
-/* карточки дня в Ай Про: сменяются по шагам */
-.story__col--day{place-items:center start}
-.story__col--day .clock{justify-self:start}
-.dcs{position:relative;width:min(100%,380px);height:300px;margin-top:34px}
-.dcs .dc{position:absolute;left:0;top:0;width:100%}
-html.js .dcs .dc{opacity:0;transform:translateY(24px) scale(.96) rotate(-1.5deg);transition:opacity .6s var(--ease),transform .7s var(--ease)}
-html.js .dcs .dc.is-on{opacity:1;transform:rotate(-1.5deg)}
-html:not(.js) .dcs .dc:not(:first-child){display:none}
-.dc{display:grid;gap:6px;padding:20px 22px 22px;border-radius:28px;background:#fff;color:var(--ink);box-shadow:0 30px 60px rgba(10,44,85,.22)}
-.dc b{font-size:20px;font-weight:800;letter-spacing:-.03em;line-height:1.15}
-.dc > span:not(.dc__ph){font-size:15px;font-weight:600;color:var(--ink-2)}
-.dc__route{display:flex;align-items:center;gap:10px;margin-bottom:12px}
-.dc__pt{width:48px;height:48px;flex:none;border-radius:16px;display:grid;place-items:center;background:#EAF3FB;color:var(--navy)}
-.dc__pt--to{background:var(--navy);color:var(--sun)}
-.dc__pt .i{width:24px;height:24px}
-.dc__dash{position:relative;flex:1;height:3px;background:repeating-linear-gradient(90deg,#9CC6EA 0 8px,transparent 8px 14px)}
-.dc__bus{position:absolute;left:50%;top:50%;width:42px;height:42px;margin:-21px 0 0 -21px;border-radius:14px;display:grid;place-items:center;background:var(--g-sun);color:var(--navy);box-shadow:0 4px 0 #B98400}
-.dc__bus .i{width:22px;height:22px}
-.dc.is-on .dc__bus,.sstep.is-on .dc__bus{animation:busgo 1.6s var(--ease) both}
-@keyframes busgo{from{left:8%}to{left:50%}}
-.dc__seats{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:12px}
-.dc__seats i{aspect-ratio:1/1;border-radius:50%;background:var(--sky);box-shadow:inset 0 -3px 0 rgba(10,44,85,.18)}
-.dc__seats i:nth-child(3n){background:var(--sun)}
-.dc__seats i:nth-child(5n){background:var(--navy)}
-.dc__ph{display:block;aspect-ratio:16/9;margin:-8px -10px 10px;border-radius:20px;overflow:hidden;background:#e7eef6}
-.dc__ph img{width:100%;height:100%;object-fit:cover}
-.dc__chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
-.dc__chips span{padding:7px 11px;border-radius:999px;background:#EAF3FB;color:var(--navy);font-weight:700;font-size:13.5px}
-.dc__chips span:nth-child(3n+1){background:#FFF1C2}
-.dc__hw{display:inline-flex;align-items:center;gap:8px;justify-self:start;margin:4px 0 8px;padding:7px 12px 7px 8px;border-radius:999px;background:#E3F6EA;color:#17663A;font-weight:800;font-size:14px}
-.dc__hw .i{width:20px;height:20px;padding:3px;border-radius:50%;background:#2FA562;color:#fff;stroke-width:3}
-
-@media (max-width:900px){
-  .story__seq{grid-template-columns:minmax(0,1fr)}
-  .story__col{display:none}
-  .sstep{min-height:0;padding-block:26px;gap:12px}
-  html.js .sstep{opacity:.4}
-  .sstep__t{font-size:clamp(54px,16vw,80px);line-height:.9;letter-spacing:-.06em;color:var(--fg)}
-  .story--day .sstep__t{color:var(--navy)}
-  .sstep__l{font-size:clamp(24px,6.6vw,32px)}
-  .sstep__cards{display:grid;gap:10px;margin-top:6px}
-  .sstep__cards .ntf{display:grid}
-  .sstep__cards .dc{width:min(100%,380px)}
-  .punch{font-size:clamp(36px,10vw,52px);padding-block:4vh 0}
-}
+.li{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 18px;margin:0}
+.li__t{font-size:clamp(52px,6.4vw,104px);font-weight:800;letter-spacing:-.06em;line-height:.85;font-variant-numeric:tabular-nums;color:var(--accent)}
+.li__s{font-size:clamp(20px,1.9vw,27px);font-weight:750;letter-spacing:-.025em;line-height:1.15;color:var(--fg)}
+.li--plain .li__s{display:inline-flex;align-items:center;gap:12px;color:var(--muted)}
+.li--plain .li__s::before{content:"";width:30px;height:3px;border-radius:3px;background:var(--accent);flex:none}
+@media (max-width:600px){.li{gap:2px 14px}.li__t{font-size:clamp(48px,15vw,64px)}.li__s{font-size:19px}}
 
 /* ---------- питание: крупная «4» и наклейки ---------- */
 .big4{display:flex;align-items:center;gap:16px;margin-top:6px}
-.big4 b{font-size:clamp(110px,13vw,190px);font-weight:900;letter-spacing:-.07em;line-height:.8;color:var(--accent)}
+.big4 b{font-size:clamp(84px,9vw,140px);font-weight:900;letter-spacing:-.07em;line-height:.8;color:var(--accent)}
 .big4 span{font-size:clamp(22px,2.2vw,32px);font-weight:800;letter-spacing:-.035em;line-height:1.05;max-width:7em}
 .food__ph{position:relative}
 .food__ph .frame{max-height:72vh}
@@ -928,14 +848,8 @@ html.a11y .price,html.a11y .dirc,html.a11y .alb,html.a11y .qa,html.a11y .news__c
 html.a11y .news__card.is-pin{background:#fff !important;color:#000 !important}
 html.a11y .news__card.is-pin p,html.a11y .news__card.is-pin .news__meta,html.a11y .news__card.is-pin .news__more{color:#000 !important}
 html.a11y a{text-decoration:underline}
-html.a11y .story__col{display:none}
-html.a11y .story__seq{grid-template-columns:1fr}
-html.a11y .sstep{opacity:1 !important;min-height:0;padding-block:20px}
-html.a11y .sstep__cards{display:grid;gap:10px}
 html.a11y .review{rotate:0deg}
-html.a11y .ntf{background:#fff !important;border:2px solid #000;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
-html.a11y .ntf b,html.a11y .ntf small{color:#000 !important}
-html.a11y .ntf .i{background:#000;color:#fff}
+
 html.a11y .more{background:#000 !important;color:#fff !important}
 html.a11y .intro .h1,html.a11y .intro .kicker{color:#fff}
 html.a11y .intro::after{display:block;background:rgba(0,0,0,.6)}
