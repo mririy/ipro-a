@@ -273,26 +273,76 @@ html.modal-open{overflow:hidden}
 /* стеклянная панель и список фактов на ней (iOS-стекло поверх фото и видео) */
 .glass{background:rgba(255,255,255,.14);-webkit-backdrop-filter:blur(22px) saturate(1.5);backdrop-filter:blur(22px) saturate(1.5);border:1px solid rgba(255,255,255,.28);border-radius:26px;box-shadow:inset 0 1px 0 rgba(255,255,255,.34),0 18px 40px rgba(4,14,30,.22)}
 .gl{display:grid;padding:4px 18px}
-.gl li{display:grid;grid-template-columns:22px minmax(0,1fr);gap:12px;align-items:start;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.16);font-size:16.5px;font-weight:650;letter-spacing:-.01em;line-height:1.32;color:#fff}
+.gl li{display:grid;grid-template-columns:38px minmax(0,1fr);gap:13px;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.16);font-size:16.5px;font-weight:650;letter-spacing:-.01em;line-height:1.3;color:#fff}
 .gl li:last-child{border-bottom:0}
-.gl .i{width:22px;height:22px;margin-top:0;padding:4px;border-radius:50%;background:var(--sun);color:var(--navy);stroke-width:3.2}
-/* фото-карточка: снимок на всю карточку, заголовок и стеклянный список снизу */
-.decks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:start}
-.deck{position:relative;isolation:isolate;display:flex;flex-direction:column;justify-content:flex-end;min-height:clamp(560px,64vh,700px);padding:16px;border-radius:36px;overflow:hidden;color:#fff;background:#1b3558;box-shadow:0 30px 60px rgba(10,44,85,.22)}
-.deck__ph{position:absolute;inset:0;z-index:-2}
-.deck__ph img{width:100%;height:100%;object-fit:cover;transform:scale(1.02)}
-.deck::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(6,20,40,0) 20%,rgba(6,20,40,.35) 55%,rgba(6,20,40,.72))}
-.deck__in{display:grid;gap:14px}
-.deck__t{margin:0 6px;font-size:clamp(28px,2.6vw,38px);font-weight:800;letter-spacing:-.045em;line-height:1;text-shadow:0 2px 18px rgba(0,0,0,.25)}
-@media (max-width:900px){
-  /* телефон: карточки по одной, при прокрутке следующая наезжает на предыдущую */
-  .decks{grid-template-columns:minmax(0,1fr);gap:22px}
-  .deck{position:sticky;top:84px;min-height:0;padding:200px 12px 12px;border-radius:30px}
-  .deck + .deck{top:98px}
-  .gl{padding:2px 16px}
-  .gl li{font-size:15.5px;padding:11px 0}
-  .deck__t{font-size:28px}
+.gl__ic{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:var(--sun);color:var(--navy)}
+.gl__ic .i{width:20px;height:20px}
+/* =====================================================================
+   КОНЦЕПЦИЯ — как в прежнем варианте A: обложка, цифры плитками, бегущая строка,
+   две группы с мини-иконками в квадратиках
+   ===================================================================== */
+.sc--stack{flex-direction:column;align-items:stretch}
+#concept > .wrap:first-child{padding-bottom:0}
+#concept > .wrap:last-child{padding-top:0}
+#concept > .wrap{gap:12px}
+.chero{position:relative;isolation:isolate;min-height:clamp(480px,64vh,640px);display:flex;align-items:flex-end;border-radius:36px;overflow:hidden;color:#fff;background:var(--navy);box-shadow:0 30px 60px rgba(10,44,85,.18)}
+.chero__ph{position:absolute;inset:0;z-index:-2;width:100%;height:100%;object-fit:cover}
+.chero::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(10,44,85,0) 22%,rgba(10,44,85,.9))}
+.chero__in{display:grid;gap:16px;padding:clamp(22px,3.2vw,48px);max-width:960px}
+.chip{display:inline-flex;align-items:center;gap:8px;justify-self:start;padding:9px 14px;border-radius:999px;background:var(--sun);color:var(--navy);font:800 13px/1 var(--f);letter-spacing:.08em;text-transform:uppercase}
+.chip .i{width:16px;height:16px}
+.chero .h2{color:#fff}
+.chero mark{background:var(--sun);color:var(--navy);padding:0 .12em;border-radius:.16em;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.chero p{font-size:var(--t-lead);line-height:1.45;font-weight:500;opacity:.94;max-width:34em}
+.cstats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.cst{display:grid;align-content:start;gap:8px;padding:20px 22px 22px;border-radius:26px;background:#fff;color:var(--navy)}
+.cst:nth-child(1){background:var(--sun)}
+.cst:nth-child(2){background:#CFE5F6}
+.cst:nth-child(3){background:var(--navy);color:#fff}
+.cst b{font-size:clamp(34px,3.6vw,56px);font-weight:900;letter-spacing:-.05em;line-height:.9;font-variant-numeric:tabular-nums}
+.cst:last-child b{font-size:clamp(28px,2.9vw,44px)}
+.cst span{font-size:14px;font-weight:700;line-height:1.3}
+/* бегущая строка с пунктами концепции */
+.mq{overflow:hidden;padding-block:clamp(28px,5vh,48px)}
+.mq__band{background:var(--navy);color:#fff;rotate:-1.4deg;margin-inline:-4%;padding-block:16px;box-shadow:0 20px 40px rgba(10,44,85,.18)}
+.mq__track{display:flex;width:max-content;animation:mq 70s linear infinite}
+.mq__track span{display:inline-flex;align-items:center;gap:28px;padding-right:28px;font-size:clamp(18px,1.7vw,24px);font-weight:800;letter-spacing:-.02em;white-space:nowrap}
+.mq__track .i{width:22px;height:22px;color:var(--sun)}
+@keyframes mq{to{transform:translateX(-50%)}}
+/* группы: тёмная и светлая карточки, пункты с мини-иконками */
+.cgs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
+.cg{display:grid;gap:18px;padding:clamp(20px,2.6vw,32px);border-radius:36px}
+.cg--deep{background:var(--navy);color:#fff;box-shadow:0 24px 50px rgba(10,44,85,.2)}
+.cg--light{background:#fff;color:var(--navy);box-shadow:0 20px 44px rgba(10,44,85,.08)}
+.cg__t{font-size:clamp(28px,2.6vw,40px);font-weight:800;letter-spacing:-.045em;line-height:1}
+.cg--deep .cg__t{color:var(--sun)}
+.cg--light .cg__t{color:var(--blue)}
+.cg__list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.cg__list li{display:grid;grid-template-columns:44px minmax(0,1fr);gap:14px;align-items:center;padding:12px 14px;border-radius:20px}
+.cg--deep .cg__list li{background:rgba(255,255,255,.07)}
+.cg--light .cg__list li{background:#F3F7FB}
+.cg__ic{width:44px;height:44px;border-radius:14px;display:grid;place-items:center}
+.cg--deep .cg__ic{background:var(--sun);color:var(--navy)}
+.cg--light .cg__ic{background:var(--navy);color:var(--sun)}
+.cg__ic .i{width:22px;height:22px}
+.cg__list b{font-size:15.5px;font-weight:700;line-height:1.25}
+@media (max-width:1180px){.cg__list{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:860px){.cstats{grid-template-columns:1fr 1fr;gap:10px}.cgs{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:600px){
+  .chero{min-height:500px;border-radius:30px}
+  .cst{padding:16px 16px 18px;border-radius:22px}
+  .cst b{font-size:34px}
+  .cst:last-child b{font-size:25px;white-space:nowrap;letter-spacing:-.04em}
+  .cst span{font-size:13.5px}
+  .mq__track span{font-size:18px;gap:22px;padding-right:22px}
+  .cg{padding:22px 16px 18px;border-radius:30px;gap:16px}
+  .cg__t{font-size:30px}
+  .cg__list li{grid-template-columns:42px minmax(0,1fr);gap:12px;padding:10px 12px;border-radius:18px}
+  .cg__ic{width:42px;height:42px;border-radius:13px}
+  .cg__list b{font-size:16px}
 }
+@media (prefers-reduced-motion:reduce){.mq__track{animation:none}}
+
 /* безопасность: видео и стеклянная панель с фактами */
 .safe{position:relative}
 .safe__media{position:relative;margin:0;aspect-ratio:16/9;max-height:78vh;width:100%;border-radius:36px;overflow:hidden;background:#0d2a4c;box-shadow:0 30px 60px rgba(0,0,0,.3)}
@@ -899,8 +949,13 @@ html.a11y .review{rotate:0deg}
 html.a11y .dirc__ph::after,html.a11y .alb__ph::after{background:rgba(0,0,0,.55)}
 html.a11y .alb__cap b,html.a11y .dirc__t{color:#fff !important}
 html.a11y .glass{background:rgba(0,0,0,.78) !important;-webkit-backdrop-filter:none;backdrop-filter:none;border-color:#fff}
-html.a11y .deck__t{color:#fff !important}
-html.a11y .deck{position:relative !important;top:auto !important}
+html.a11y .mq{display:none}
+html.a11y .cst{box-shadow:inset 0 0 0 2px #000}
+html.a11y .cg--light{box-shadow:inset 0 0 0 2px #000}
+html.a11y .chero__in,html.a11y .chero .h2,html.a11y .chero p{color:#fff !important}
+html.a11y .cg--deep{background:#000 !important;color:#fff !important}
+html.a11y .cg--deep .cg__list b{color:#fff !important}
+html.a11y .cst:nth-child(3){background:#000 !important;color:#fff !important}
 html.a11y .dirc__list{color:#000}
 
 html.a11y .more{background:#000 !important;color:#fff !important}

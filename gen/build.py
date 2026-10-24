@@ -93,8 +93,8 @@ def li(key):
 
 
 def glist(items):
-    """Список фактов на стеклянной панели: галочка и текст (тексты — как у школы)."""
-    lis = ''.join(f'<li>{I("check")}<span>{e(t)}</span></li>' for _ic, t in items)
+    """Список фактов на стеклянной панели: мини-иконка в квадратике и текст школы."""
+    lis = ''.join(f'<li><span class="gl__ic">{I(ic)}</span><span>{e(t)}</span></li>' for ic, t in items)
     return f'<ul class="gl">{lis}</ul>'
 
 
@@ -196,20 +196,26 @@ def news_card(n):
 
 
 def concept():
+    """Концепция — как в прежнем варианте A: обложка, цифры плитками, бегущая строка, две группы с мини-иконками."""
     c = CONCEPT
     stats = ''.join(
-        f'<div class="stat rv"><b{" data-count=" + chr(34) + re.sub(r"[^0-9]", "", n) + chr(34) if cnt else ""}>{e(n)}</b><span>{e(l)}</span></div>'
+        f'<div class="cst rv"><b{" data-count=" + chr(34) + re.sub(r"[^0-9]", "", n) + chr(34) if cnt else ""}>{e(n)}</b><span>{e(l)}</span></div>'
         for n, l, cnt in c['stats'])
-    decks = ''.join(f'''<article class="deck rv">
-      <span class="deck__ph"><img src="assets/img/{ph}.jpg" alt="" loading="lazy"></span>
-      <div class="deck__in"><h3 class="deck__t">{e(title)}</h3><div class="glass">{glist(items)}</div></div>
-    </article>''' for title, ph, items in c['groups'])
+    run = ''.join(f'<span>{e(t)}{I("sun")}</span>' for _t, _tone, items in c['groups'] for _ic, t in items)
+    groups = ''
+    for title, tone, items in c['groups']:
+        lis = ''.join(f'<li><span class="cg__ic">{I(ic)}</span><b>{e(t)}</b></li>' for ic, t in items)
+        groups += f'<article class="cg cg--{tone} rv"><h3 class="cg__t">{e(title)}</h3><ul class="cg__list">{lis}</ul></article>'
     body = f'''  <div class="wrap">
-    <div class="sh">{h2(c['title'], c['title_em'])}<p class="lead rv">{e(c['lead'])}</p></div>
-    <div class="stats">{stats}</div>
-    <div class="decks">{decks}</div>
-  </div>'''
-    return section('concept', 'morning', 'Концепция', '01', body)
+    <div class="chero rv">
+      <img class="chero__ph" src="assets/img/{c['photo']}.jpg" alt="Исторический особняк школы в парке Ялты" loading="lazy">
+      <div class="chero__in"><span class="chip">{I('sparkles')}{e(c['chip'])}</span><h2 class="h2" data-split>{e(c['title'])} <mark>{e(c['title_em'])}</mark></h2><p>{e(c['lead'])}</p></div>
+    </div>
+    <div class="cstats">{stats}</div>
+  </div>
+  <div class="mq" aria-hidden="true"><div class="mq__band"><div class="mq__track">{run}{run}</div></div></div>
+  <div class="wrap"><div class="cgs">{groups}</div></div>'''
+    return section('concept', 'morning', 'Концепция', '01', body, 'sc--stack')
 
 
 def about():
