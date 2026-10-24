@@ -79,16 +79,22 @@ SHORT = {'news': 'Новости', 'programs': 'Программы', 'extra': '�
 
 
 def li(key):
-    """Подводка к блоку: 3D-иллюстрация, время дня крупно и короткая фраза."""
+    """Подводка к блоку — одна компактная строка: 3D-иллюстрация, время дня и короткая фраза.
+    Если фразы нет (она повторила бы заголовок), остаётся только иллюстрация."""
     if key not in LEADINS:
         return ''
-    t, phrase, ills = LEADINS[key]
+    t, phrase, ill = LEADINS[key]
+    art = f'<img class="li__3d" src="assets/img/3d/{ill}.webp" alt="" aria-hidden="true" loading="lazy">' if ill else ''
     tm = f'<span class="li__t" data-time="{e(t)}">{e(t)}</span>' if t else ''
-    art = ''
-    if ills:
-        imgs = ''.join(f'<img class="li__o li__o--{i}" src="assets/img/3d/{n}.webp" alt="" loading="lazy">' for i, n in enumerate(ills))
-        art = f'<span class="li__3d" aria-hidden="true">{imgs}</span>'
-    return f'<div class="li rv{"" if t else " li--plain"}">{art}<p class="li__txt">{tm}<span class="li__s">{e(phrase)}</span></p></div>'
+    ph = f'<span class="li__s">{e(phrase)}</span>' if phrase else ''
+    txt = f'<p class="li__txt">{tm}{ph}</p>' if (tm or ph) else ''
+    cls = 'li rv' + ('' if t else ' li--plain') + ('' if txt else ' li--art')
+    return f'<div class="{cls}">{art}{txt}</div>'
+
+
+def floats(key):
+    """3D-иллюстрации поверх фото или видео блока."""
+    return ''.join(f'<img class="fl3d fl3d--{i}" src="assets/img/3d/{n}.webp" alt="" aria-hidden="true" loading="lazy">' for i, n in enumerate(FLOATS.get(key, ())))
 
 
 def section(id_, pal, title, num, body, cls='', extra=''):
@@ -191,10 +197,11 @@ def concept():
     groups = ''.join(f'<div class="feat__g"><h3 class="feat__t">{e(title)}</h3>{sl(items)}</div>' for title, items in c['groups'])
     body = f'''  <div class="wrap">
     <div class="split">
-      <div class="sh">{li('concept')}{h2(c['title'], c['title_em'])}<p class="lead rv">{e(c['lead'])}</p></div>
+      <div class="sh">{h2(c['title'], c['title_em'])}<p class="lead rv">{e(c['lead'])}</p></div>
       <div class="stack rv" aria-hidden="true">
         <div class="stack__a" data-par="-0.05"><img src="assets/img/facade.jpg" alt="" loading="lazy"></div>
         <div class="stack__b" data-par="0.07"><img src="assets/img/paint.jpg" alt="" loading="lazy"></div>
+        {floats('concept')}
       </div>
     </div>
     <div class="stats">{stats}</div>
@@ -284,7 +291,7 @@ def teachers():
     t = TEACHERS
     cards = ''.join(f'<figure class="person rv"><span class="person__ph"><img src="assets/img/{img}.jpg" alt="{e(name)}" loading="lazy"></span><figcaption><b>{e(name)}</b><span>{e(role)}</span></figcaption></figure>' for img, name, role in t['people'])
     body = f'''  <div class="wrap">
-    <div class="sh">{li('teachers')}{h2('Взрослые', 'рядом')}<h3 class="sub-h rv">{e(t['title'])} {e(t['title_em'])}</h3></div>
+    <div class="sh">{li('teachers')}{h2(t['title'], t['title_em'])}</div>
     <div class="people">{cards}</div>
   </div>'''
     return section('teachers', 'blue', 'Педагоги', '05', body)
@@ -306,17 +313,11 @@ def extra():
     x = EXTRA
     dirs = ''
     for dr in x['directions']:
-        n = len(dr['media'])
-        lst = ''.join(f'<li>{e(t)}</li>' for t in dr['list'])
-        dirs += f'''<article class="dirc rv">
-      <button type="button" class="dirc__ph" data-album="{dr['key']}" aria-label="{e(dr['name'])}: фото и видео"><img src="assets/img/{dr['cover']}.jpg" alt="" loading="lazy"><span class="dirc__n">{I('images')}{n}</span></button>
-      <div class="dirc__txt">
-        <h3 class="dirc__t">{I(dr['icon'], 'sq')}{e(dr['name'])}</h3>
-        <ul class="dirc__list">{lst}</ul>
-        {more('Фото и видео', 'button', f' data-album="{dr["key"]}"')}
-      </div>
-    </article>'''
-    guests = ''.join(f'<article class="guest rv"><span class="guest__mono" aria-hidden="true">{e(n[0])}</span><div><b>{e(n)}</b><span class="guest__what">{e(w)}</span><p>{e(c)}</p></div></article>' for n, w, c in x['guests'])
+        dirs += f'''<button type="button" class="dirc rv" data-album="{dr['key']}" aria-label="{e(dr['name'])}: фото и видео">
+      <span class="dirc__ph"><img src="assets/img/{dr['cover']}.jpg" alt="" loading="lazy"><span class="dirc__cap"><b class="dirc__t">{e(dr['name'])}</b>{more('Фото и видео')}</span></span>
+      <span class="dirc__list">{e(' · '.join(dr['list']))}</span>
+    </button>'''
+    guests = ''.join(f'<article class="guest rv"><img class="guest__3d" src="assets/img/3d/{ill}.webp" alt="" aria-hidden="true" loading="lazy"><div><b>{e(n)}</b><span class="guest__what">{e(w)}</span><p>{e(c)}</p></div></article>' for n, w, ill, c in x['guests'])
     body = f'''  <div class="wrap">
     <div class="sh">{li('extra')}{h2(x['title'], x['title_em'])}<p class="lead rv">{e(x['lead'])}</p></div>
     <div class="dirs">{dirs}</div>
@@ -352,8 +353,8 @@ def summer():
       <div class="ep__txt"><p class="ep__k">{e(mon)}</p><h3>{e(title)}</h3><p>{text}</p></div></article>''' for n, mon, title, text, img, alt in s['episodes'])
     body = f'''  <div class="wrap">
     <div class="split split--summer">
-      <div class="sh">{li('summer')}{h2(s['title'], s['title_em'])}<p class="lead rv">{e(s['lead'])}</p></div>
-      <figure class="frame frame--round rv">{video('summer_yard', '', 'Летний клуб во дворе школы: рисунки мелками и танцы')}</figure>
+      <div class="sh">{h2(s['title'], s['title_em'])}<p class="lead rv">{e(s['lead'])}</p></div>
+      <div class="media3d rv"><figure class="frame frame--round">{video('summer_yard', '', 'Летний клуб во дворе школы: рисунки мелками и танцы')}</figure>{floats('summer')}</div>
     </div>
     <ul class="meta rv">{''.join(f'<li>{I(ic)}{e(t)}</li>' for ic, t in s['facts'])}</ul>
     <div class="eps">{eps}</div>
@@ -412,11 +413,9 @@ def plural_media(n):
 def gallery():
     cards = ''
     for k, label in GALLERY_TABS:
-        n = sum(1 for g in GALLERY if g[0] == k)
-        cards += f'''<button type="button" class="alb rv" data-album="{k}">
+        cards += f'''<button type="button" class="alb rv" data-album="{k}" aria-label="{e(label)}: фото и видео">
       <span class="alb__ph"><img src="assets/img/{GALLERY_COVERS[k]}.jpg" alt="" loading="lazy"></span>
-      <span class="alb__txt"><b>{e(label)}</b><small>{plural_media(n)}</small></span>
-      {more('Смотреть')}
+      <span class="alb__cap"><b>{e(label)}</b>{more('Смотреть')}</span>
     </button>'''
     body = f'''  <div class="wrap">
     <div class="sh">{li('gallery')}{h2('Фото и видео', 'школы')}</div>
