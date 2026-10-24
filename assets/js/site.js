@@ -34,7 +34,7 @@
   })();
 
   /* ---------------- главы, палитры, капсула, точки ---------------- */
-  var scenes = $$('main > .sc');
+  var scenes = $$('main .sc');
   var themeMeta = $('meta[name="theme-color"]');
   var chapNum = $('#chapNum'), chapName = $('#chapName'), chapBtn = $('#menuBtn'), bar = $('.dock__bar');
   var KEYS = ['bg', 'fg', 'muted', 'accent', 'aura', 'band', 'card', 'line'];
@@ -312,9 +312,20 @@
   /* ---------------- параллакс (только компьютер) и прогресс ---------------- */
   var par = fine ? $$('[data-par]') : [];
   var ticking = false;
+  var introSec = $('.drw > .intro');
+  function updDrawer(vh) {
+    if (!introSec) return;
+    var p = clamp01(scrollY / vh);
+    introSec.style.setProperty('--dp', reduce ? 0 : p.toFixed(3));
+    if (introV) {
+      if (p > 0.97) { if (!introV.paused) { introV.pause(); introV._covered = true; } }
+      else if (introV._covered && introV.paused) { introV._covered = false; tryPlay(introV); }
+    }
+  }
   function frame() {
     ticking = false;
     var vh = innerHeight, max = root.scrollHeight - vh;
+    updDrawer(vh);
     if (bar) bar.style.transform = 'scaleX(' + (max > 0 ? Math.min(1, scrollY / max) : 0).toFixed(4) + ')';
     updSeqs(); updArcs(); updRoute();
     if (reduce || isA11y()) return;
