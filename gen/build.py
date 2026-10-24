@@ -79,12 +79,17 @@ SHORT = {'news': 'Новости', 'programs': 'Программы', 'extra': '�
 
 
 def li(key):
-    """Подводка к блоку — короткая строка над заголовком: время дня и фраза."""
+    """Подводка к блоку — одна компактная строка: 3D-иллюстрация, время дня и короткая фраза.
+    Если фразы нет (она повторила бы заголовок), остаётся только иллюстрация."""
     if key not in LEADINS:
         return ''
-    t, phrase = LEADINS[key][:2]
-    tm = f'<b class="li__t" data-time="{e(t)}">{e(t)}</b>' if t else ''
-    return f'<p class="eyebrow rv">{tm}<span>{e(phrase)}</span></p>'
+    t, phrase, ill = LEADINS[key]
+    art = f'<img class="li__3d" src="assets/img/3d/{ill}.webp" alt="" aria-hidden="true" loading="lazy">' if ill else ''
+    tm = f'<span class="li__t" data-time="{e(t)}">{e(t)}</span>' if t else ''
+    ph = f'<span class="li__s">{e(phrase)}</span>' if phrase else ''
+    txt = f'<p class="li__txt">{tm}{ph}</p>' if (tm or ph) else ''
+    cls = 'li rv' + ('' if t else ' li--plain') + ('' if txt else ' li--art')
+    return f'<div class="{cls}">{art}{txt}</div>'
 
 
 def ilist(items, cls=''):
@@ -100,7 +105,8 @@ def glist(items):
 
 
 def floats(key):
-    return ''  # 3D-эмодзи убраны: живые фото, видео и 3D-макет школы — сильнее
+    """3D-иллюстрации поверх фото или видео блока."""
+    return ''.join(f'<img class="fl3d fl3d--{i}" src="assets/img/3d/{n}.webp" alt="" aria-hidden="true" loading="lazy">' for i, n in enumerate(FLOATS.get(key, ())))
 
 
 def section(id_, pal, title, num, body, cls='', extra=''):
@@ -179,13 +185,12 @@ def intro():
 def news():
     cards = ''.join(news_card(n) for n in NEWS_SEED)
     data = json.dumps(NEWS_SEED, ensure_ascii=False)
-    body = f'''  <span class="grab" aria-hidden="true"></span>
-  <div class="wrap news">
-    <div class="news__head"><h2 class="h3">Новости и объявления</h2></div>
+    body = f'''  <div class="wrap news">
+    <div class="news__head">{li('news')}<h2 class="h3">Новости и объявления</h2></div>
     <div class="news__list hs" id="newsList">{cards}</div>
   </div>
   <script type="application/json" id="newsSeed">{data}</script>'''
-    return section('news', 'morning', 'Новости и объявления', '', body, 'sc--auto drw__sheet')
+    return section('news', 'morning', 'Новости и объявления', '', body, 'sc--auto')
 
 
 def news_card(n):
@@ -288,7 +293,7 @@ def food():
     body = f'''  <div class="wrap">
     <div class="split split--food">
       <div class="sh">{li('food')}{h2(f['title'], f['title_em'])}{ilist(f['items'], 'rv')}</div>
-      <figure class="frame rv"><img src="assets/img/food.jpg" alt="Дети выбирают еду на шведском столе" loading="lazy"></figure>
+      <figure class="frame frame--tilt rv"><img src="assets/img/food.jpg" alt="Дети выбирают еду на шведском столе" loading="lazy"></figure>
     </div>
   </div>'''
     return section('food', 'warm', 'Питание', '04', body)
@@ -325,7 +330,7 @@ def extra():
       <span class="dirc__ph"><img src="assets/img/{dr['cover']}.jpg" alt="" loading="lazy"><span class="dirc__cap"><b class="dirc__t">{e(dr['name'])}</b>{more('Фото и видео')}</span></span>
       <span class="dirc__list">{e(' · '.join(dr['list']))}</span>
     </button>'''
-    guests = ''.join(f'<article class="guest rv"><span class="mi mi--lg">{I(ill)}</span><div><b>{e(n)}</b><span class="guest__what">{e(w)}</span><p>{e(c)}</p></div></article>' for n, w, ill, c in x['guests'])
+    guests = ''.join(f'<article class="guest rv"><img class="guest__3d" src="assets/img/3d/{ill}.webp" alt="" aria-hidden="true" loading="lazy"><div><b>{e(n)}</b><span class="guest__what">{e(w)}</span><p>{e(c)}</p></div></article>' for n, w, ill, c in x['guests'])
     body = f'''  <div class="wrap">
     <div class="sh">{li('extra')}{h2(x['title'], x['title_em'])}<p class="lead rv">{e(x['lead'])}</p></div>
     <div class="dirs">{dirs}</div>
@@ -343,7 +348,7 @@ def transfer():
     body = f'''  <div class="wrap">
     <div class="split split--transfer">
       <div class="sh">{li('transfer')}{h2(t['title'], t['title_em'])}<p class="lead rv">{e(t['lead'])}</p>{ilist(t['items'], 'rv')}</div>
-      <figure class="frame rv"><img src="assets/img/bus.jpg" alt="Микроавтобус школьного трансфера на дорожке у парка" loading="lazy"></figure>
+      <figure class="frame frame--tilt rv"><img src="assets/img/bus.jpg" alt="Микроавтобус школьного трансфера на дорожке у парка" loading="lazy"></figure>
     </div>
     <div class="route rv" data-route aria-hidden="true">
       <svg viewBox="0 0 1000 160" preserveAspectRatio="none"><path class="route__line" d="M40 120 C 220 120, 260 40, 420 50 S 640 140, 780 90 S 920 40, 960 40"/><path class="route__done" d="M40 120 C 220 120, 260 40, 420 50 S 640 140, 780 90 S 920 40, 960 40"/></svg>
@@ -362,7 +367,7 @@ def summer():
     body = f'''  <div class="wrap">
     <div class="split split--summer">
       <div class="sh">{h2(s['title'], s['title_em'])}<p class="lead rv">{e(s['lead'])}</p></div>
-      <figure class="frame frame--round rv">{video('summer_yard', '', 'Летний клуб во дворе школы: рисунки мелками и танцы')}</figure>
+      <div class="media3d rv"><figure class="frame frame--round">{video('summer_yard', '', 'Летний клуб во дворе школы: рисунки мелками и танцы')}</figure>{floats('summer')}</div>
     </div>
     {ilist(s['facts'], 'ilist2--2 rv')}
     <div class="eps">{eps}</div>
@@ -646,7 +651,7 @@ def asset_v(path):
 
 
 def page():
-    main = ('<div class="drw">\n' + intro() + news() + concept() + '</div>\n' + about() + programs() + food() + teachers() + safety()
+    main = ('<div class="drw">\n' + intro() + '<div class="drw__sheet"><span class="grab" aria-hidden="true"></span>\n' + news() + concept() + '</div></div>\n' + about() + programs() + food() + teachers() + safety()
             + extra() + transfer() + summer() + reviews() + admission() + gallery() + night() + signup())
     n = len(PROGRAMS)
     dialogs = ''.join(program_dialog(p, PROGRAMS[(i - 1) % n], PROGRAMS[(i + 1) % n]) for i, p in enumerate(PROGRAMS))

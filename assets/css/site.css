@@ -38,7 +38,7 @@
 .pal-sky      { --s-bg:#6AA8D4; --s-fg:#0A2C55; --s-muted:#173A63; --s-accent:#FFFFFF; --s-aura:#BFE0F7; --s-band:rgba(255,255,255,.18); --s-card:rgba(255,255,255,.28); --s-line:rgba(10,44,85,.2); --sqbg:#0A2C55; --sqfg:#FCC41C; }
 .pal-paper    { --s-bg:#EEF4FA; --s-fg:#0A2C55; --s-muted:#4E6078; --s-accent:#2F7BC4; --s-aura:#CBE2F5; --s-band:rgba(255,255,255,.8); --s-card:#FFFFFF; --s-line:rgba(10,44,85,.12); --sqbg:#0A2C55; --sqfg:#FCC41C; }
 .pal-warm     { --s-bg:#FFF0D4; --s-fg:#0A2C55; --s-muted:#5E6573; --s-accent:#B87800; --s-aura:#FFD27A; --s-band:rgba(255,255,255,.62); --s-card:#FFFFFF; --s-line:rgba(10,44,85,.12); --sqbg:#0A2C55; --sqfg:#FCC41C; }
-.pal-blue     { --s-bg:#2F7BC4; --s-fg:#FFFFFF; --s-muted:#E2EEF9; --s-accent:#FCC41C; --s-aura:#8CC4EE; --s-band:rgba(255,255,255,.13); --s-card:rgba(255,255,255,.14); --s-line:rgba(255,255,255,.3); --sqbg:#FCC41C; --sqfg:#0A2C55; }
+.pal-blue     { --s-bg:#2F7BC4; --s-fg:#FFFFFF; --s-muted:#E2EEF9; --s-accent:#FFE07A; --s-aura:#8CC4EE; --s-band:rgba(255,255,255,.13); --s-card:rgba(255,255,255,.14); --s-line:rgba(255,255,255,.3); --sqbg:#FCC41C; --sqfg:#0A2C55; }
 .pal-deep     { --s-bg:#123D6E; --s-fg:#FFFFFF; --s-muted:#BFD3EA; --s-accent:#FCC41C; --s-aura:#2F6FB0; --s-band:rgba(255,255,255,.05); --s-card:rgba(255,255,255,.08); --s-line:rgba(255,255,255,.16); --sqbg:#FCC41C; --sqfg:#0A2C55; }
 .pal-amber    { --s-bg:#F6B33A; --s-fg:#0A2C55; --s-muted:#3F3214; --s-accent:#FFFFFF; --s-aura:#FFE08A; --s-band:rgba(255,255,255,.2); --s-card:rgba(255,255,255,.3); --s-line:rgba(10,44,85,.16); --sqbg:#0A2C55; --sqfg:#FCC41C; }
 .pal-afternoon{ --s-bg:#FFF1D9; --s-fg:#0A2C55; --s-muted:#5E6573; --s-accent:#2F7BC4; --s-aura:#FFC870; --s-band:rgba(255,255,255,.6); --s-card:#FFFFFF; --s-line:rgba(10,44,85,.12); --sqbg:#0A2C55; --sqfg:#FCC41C; }
@@ -887,60 +887,8 @@ html.modal-open{overflow:hidden}
 .helper__foot a{color:var(--blue-d);font-weight:700}
 
 /* =====================================================================
-   ДИЗАЙН-СИСТЕМА v2 — спокойно, современно, удобно на телефоне
-   Один стиль кнопок, карточек и списков; палитра дня без радуги;
-   без поворотов, полос, свечений и эмодзи.
+   УЛУЧШЕНИЯ ВЕРСИИ A поверх стиля B: мини-иконки, дровер, «живые» фото, цитата
    ===================================================================== */
-:root{--paper:#F4F7FB;--warm:#FBF6EC;--sky-t:#EAF3FB;--sun-t:#FFF5D9;--line-l:rgba(10,44,85,.10);
-  --sh-1:0 1px 2px rgba(10,44,85,.05),0 10px 28px rgba(10,44,85,.07);--r-card:24px}
-/* палитра дня: утро и день светлые, после уроков тёплые, вечер и ночь — синие */
-.pal-morning  { --s-bg:#F4F7FB; --s-fg:#0A2C55; --s-muted:#566579; --s-accent:#2F7BC4; --s-aura:#F4F7FB; --s-band:rgba(0,0,0,0); --s-card:#FFFFFF; --s-line:rgba(10,44,85,.10); }
-.pal-mist     { --s-bg:#FFFFFF; --s-aura:#FFFFFF; --s-band:rgba(0,0,0,0); --s-line:rgba(10,44,85,.10); }
-.pal-paper    { --s-bg:#F4F7FB; --s-aura:#F4F7FB; --s-band:rgba(0,0,0,0); --s-line:rgba(10,44,85,.10); }
-.pal-warm     { --s-bg:#FBF6EC; --s-fg:#0A2C55; --s-muted:#5E6573; --s-accent:#A86F00; --s-aura:#FBF6EC; --s-band:rgba(0,0,0,0); --s-card:#FFFFFF; --s-line:rgba(10,44,85,.10); }
-.pal-blue     { --s-bg:#EAF3FB; --s-fg:#0A2C55; --s-muted:#4E6078; --s-accent:#2F7BC4; --s-aura:#EAF3FB; --s-band:rgba(0,0,0,0); --s-card:#FFFFFF; --s-line:rgba(10,44,85,.10); --sqbg:#0A2C55; --sqfg:#FCC41C; }
-.pal-deep     { --s-bg:#0A2C55; --s-fg:#FFFFFF; --s-muted:#B9CBE2; --s-accent:#FCC41C; --s-aura:#0A2C55; --s-band:rgba(0,0,0,0); --s-card:rgba(255,255,255,.07); --s-line:rgba(255,255,255,.14); }
-.pal-afternoon{ --s-bg:#FBF6EC; --s-aura:#FBF6EC; --s-band:rgba(0,0,0,0); --s-accent:#A86F00; }
-.pal-sun      { --s-bg:#FFF5D9; --s-fg:#0A2C55; --s-muted:#5B5A4A; --s-accent:#A86F00; --s-aura:#FFF5D9; --s-band:rgba(0,0,0,0); --s-card:#FFFFFF; --s-line:rgba(10,44,85,.10); }
-.pal-twilight { --s-bg:#0D2F5A; --s-fg:#FFFFFF; --s-muted:#BCCDE4; --s-accent:#FCC41C; --s-aura:#0D2F5A; --s-band:rgba(0,0,0,0); --s-card:rgba(255,255,255,.07); --s-line:rgba(255,255,255,.14); }
-.pal-evening  { --s-bg:#0A2C55; --s-aura:#0A2C55; --s-band:rgba(0,0,0,0); --s-card:rgba(255,255,255,.07); --s-line:rgba(255,255,255,.14); }
-.pal-evening2 { --s-bg:#0A2547; --s-aura:#0A2547; --s-band:rgba(0,0,0,0); }
-.pal-night    { --s-aura:#0B121E; --s-band:rgba(0,0,0,0); }
-html{background-image:none}
-.sc::before{display:none}
-
-/* типографика: крупно, но без перегруза весом; заголовки одним цветом (акцент — только в начале и в концепции) */
-.h2 em{color:inherit}
-.h1{font-weight:800;letter-spacing:-.045em;line-height:.98}
-.h2{font-weight:750;letter-spacing:-.035em;line-height:1.04}
-.h2--sm{font-weight:750}
-.lead{font-weight:500;line-height:1.5}
-@media (max-width:600px){.h2{font-size:clamp(30px,8.4vw,36px)}.lead{font-size:17px}}
-
-/* подводка над заголовком: время дня и фраза — одна строка в цвет главы */
-.eyebrow{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 12px;margin:0;font-size:16px;font-weight:650;letter-spacing:-.01em;color:var(--muted)}
-.eyebrow .li__t{font-size:16px;font-weight:800;letter-spacing:0;color:var(--accent);font-variant-numeric:tabular-nums}
-.eyebrow span{display:inline-flex;align-items:center;gap:10px}
-.eyebrow:not(:has(.li__t)) span::before{content:"";width:22px;height:2px;border-radius:2px;background:var(--accent)}
-
-/* кнопки: плоские, одна форма */
-.pill{background:var(--pb,#0A2C55);color:#fff;box-shadow:none;padding:15px 22px;font:700 16px/1 var(--f);letter-spacing:-.01em;transition:background .2s,transform .2s var(--ease)}
-.pill::before{display:none}
-.pill:hover{transform:translateY(-1px);box-shadow:none}
-.pill:active{transform:none;box-shadow:none}
-.pill--blue,.pill--navy{--pb:#0A2C55;color:#fff}
-.pill--sun{--pb:#FCC41C;color:#0A2C55}
-.pill--white{--pb:#fff;color:#0A2C55}
-.pill--green{--pb:#1FA855;color:#fff}
-.dock__cta{padding:11px 16px;font-size:14px;box-shadow:none}
-.pal-deep .pill--blue,.pal-evening .pill--blue,.pal-twilight .pill--blue,.pal-night .pill--blue{--pb:#FCC41C;color:#0A2C55}
-.more{font-weight:700}
-
-/* фото: ровно, скругление, мягкая тень — без наклонов и толстых рамок */
-.frame{border:0;border-radius:var(--r-card);box-shadow:0 18px 40px rgba(10,44,85,.12)}
-.frame--tilt{transform:none}
-.food__ph .frame,.split--transfer .frame{transform:none}
-
 /* мини-иконки в квадратиках — общий список (питание и др.) */
 .ilist2{display:grid;gap:8px;margin-top:6px}
 .ilist2 li{display:grid;grid-template-columns:40px minmax(0,1fr);gap:14px;align-items:center;padding:10px 14px 10px 10px;border-radius:18px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line);font-size:16.5px;font-weight:650;line-height:1.3}
@@ -953,120 +901,33 @@ html{background-image:none}
 .mi--lg{width:52px;height:52px;border-radius:16px}
 .mi--lg .i{width:26px;height:26px}
 
-/* ---------- дровер: видео стоит, первый блок наезжает листом ---------- */
+.ilist2--2{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media (max-width:700px){.ilist2--2{grid-template-columns:minmax(0,1fr)}}
+.split--safety .ilist2{margin-top:0}
+
+/* читабельность: мелкий текст крупнее на телефоне */
+@media (max-width:900px){.ep p{font-size:15px;line-height:1.45}.ep__k{font-size:12.5px}.ep h3{font-size:20px}}
+@media (max-width:600px){.guest p{font-size:15px}.news__card p{font-size:15.5px}.dirc__list{font-size:15.5px}.review blockquote{font-size:16.5px}}
+
+/* ---------- дровер: видео стоит, лист с новостями и концепцией выезжает при прокрутке ----------
+   у листа тот же фон, что у страницы: цвет главы и диагональные полосы, переходы цветов сохраняются */
 .drw{position:relative}
 .drw > .intro{position:sticky;top:0;z-index:0}
-/* текст на видео всегда светлый, какая бы глава ни была активна */
 .intro{--fg:#fff;--muted:#CFE0F3;--accent:#FCC41C;color:#fff}
 .drw > .intro .intro__media{transform:scale(calc(1 - var(--dp,0) * .07));transform-origin:50% 30%;filter:brightness(calc(1 - var(--dp,0) * .45))}
 .drw > .intro .intro__in{opacity:calc(1 - var(--dp,0) * 1.4);translate:0 calc(var(--dp,0) * -40px)}
 .drw > .intro .cue{opacity:calc(1 - var(--dp,0) * 4)}
-.drw > .sc:not(.intro){position:relative;z-index:2;background:var(--s-bg)}
-/* лист не выглядывает: стоит ровно под первым экраном и выезжает только при прокрутке */
-.drw > .drw__sheet{border-radius:30px 30px 0 0}
-.drw > .drw__sheet::after{content:"";position:absolute;inset:0;border-radius:30px 30px 0 0;box-shadow:0 -18px 44px rgba(4,14,30,.3);opacity:var(--sh,0);pointer-events:none;z-index:-1}
-.drw > .drw__sheet > .wrap{padding-top:46px}
-.grab{position:absolute;left:50%;top:12px;translate:-50% 0;width:44px;height:5px;border-radius:5px;background:rgba(10,44,85,.2)}
+.drw__sheet{position:relative;z-index:2;border-radius:30px 30px 0 0;background-color:var(--bg);
+  background-image:repeating-linear-gradient(157deg,var(--band) 0 16vh,transparent calc(16vh + 1px) 58vh,var(--band) calc(58vh + 1px) 70vh,transparent calc(70vh + 1px) calc(124vh - 1px),var(--band) 124vh)}
+.drw__sheet::after{content:"";position:absolute;inset:0;z-index:-1;border-radius:30px 30px 0 0;box-shadow:0 -18px 44px rgba(4,14,30,.3);opacity:var(--sh,0);pointer-events:none;clip-path:inset(-120px 0 calc(100% - 2px) 0)}
+.drw__sheet > .sc:first-of-type > .wrap{padding-top:calc(78px + env(safe-area-inset-top,0px))}
+.grab{position:absolute;left:50%;top:12px;z-index:3;translate:-50% 0;width:44px;height:5px;border-radius:5px;background:color-mix(in srgb,var(--fg) 26%,transparent)}
 html:not(.js) .drw > .intro{position:relative}
-
-/* ---------- новости ---------- */
-.news__card{border-radius:var(--r-card);box-shadow:var(--sh-1),inset 0 0 0 1px var(--line)}
-.news__card.is-pin{box-shadow:0 14px 30px rgba(10,44,85,.22)}
-.news__card h3{font-weight:750}
-
-/* ---------- концепция ---------- */
-.mq__band{rotate:0deg;margin-inline:0;box-shadow:none;padding-block:14px}
-.mq__track span{font-size:clamp(16px,1.5vw,20px);font-weight:700}
-.cst{border-radius:22px}
-.cg{border-radius:30px}
-
-/* ---------- программы: цветные блоки школы, плоско ---------- */
-.tile{background:var(--tb);box-shadow:none;border-radius:30px;transition:transform .3s var(--ease)}
-.tile::before{display:none}
-.tile:hover{transform:translateY(-3px);box-shadow:none}
-.tile[data-k=kindergarten]{--tb:#FCC41C}
-.tile[data-k=primary]{--tb:#D6E9F8}
-.tile[data-k=middle]{--tb:#2F7BC4}
-.tile[data-k=senior]{--tb:#0A2C55}
-.tile__photo{transform:none;border:0;border-radius:20px;box-shadow:0 12px 26px rgba(10,44,85,.18)}
-.tile:hover .tile__photo{transform:none}
-.tile h3{font-weight:750}
-.tile .more{box-shadow:none}
-
-/* окна программ: та же плоская подача */
-.pm__hero::before{display:none}
-.pm__hero{background:var(--t-m)}
-.pm[data-k=kindergarten] .pm__hero{background:#FCC41C}
-.pm[data-k=primary] .pm__hero{background:#D6E9F8}
-.pm[data-k=middle] .pm__hero{background:#2F7BC4}
-.pm[data-k=senior] .pm__hero{background:#0A2C55}
-.pm__ph{transform:none;border:0;border-radius:24px;box-shadow:0 18px 40px rgba(6,30,60,.22)}
-.pm__t{font-weight:800}
-.pn a,.times li,.bl li.hl{box-shadow:none}
-.pn a{box-shadow:inset 0 0 0 1px rgba(10,44,85,.08)}
-.bl li.hl{background:#FFF1C2;box-shadow:none}
-.pm__cta .pill{--pb:#FCC41C;color:#0A2C55}
-
-/* ---------- питание ---------- */
-.split--food{align-items:center}
-.split--food .frame{aspect-ratio:4/5;max-height:72vh}
-@media (max-width:900px){.split--food .frame{aspect-ratio:4/3}}
-
-/* ---------- педагоги: ровная сетка ---------- */
-.person__ph{border:0;border-radius:22px;box-shadow:0 14px 30px rgba(10,44,85,.14)}
-.person:nth-child(even) .person__ph,.person:nth-child(even):hover .person__ph,.person:hover .person__ph{transform:none}
-.person:nth-child(even) figcaption{margin-top:0}
-.person b{font-weight:750}
-
-/* ---------- о школе ---------- */
-.trio__v:nth-child(2){transform:none}
-html.rv-ready .trio__v:nth-child(2).rv.is-in{transform:none}
-.trio__v{border-radius:22px;box-shadow:0 14px 30px rgba(10,44,85,.12)}
-.director{border-radius:28px;box-shadow:var(--sh-1)}
-.director__mk{box-shadow:none}
-
-/* ---------- авторская программа ---------- */
-.dirc__ph{border-radius:26px;box-shadow:0 14px 30px rgba(10,44,85,.14)}
-.guest{grid-template-columns:52px 1fr;border-radius:var(--r-card);box-shadow:var(--sh-1)}
-.guest .mi{--sqbg:#0A2C55;--sqfg:#FCC41C}
-
-/* ---------- трансфер ---------- */
-.route__bus{background:#FCC41C;box-shadow:0 10px 22px rgba(10,44,85,.25)}
-
-/* ---------- летний клуб ---------- */
-.ep{border-radius:var(--r-card);box-shadow:var(--sh-1)}
-
-/* ---------- отзывы: ровные карточки ---------- */
-.review{rotate:0deg;border-radius:var(--r-card);box-shadow:0 14px 30px rgba(4,14,30,.2)}
-.review:nth-child(even){rotate:0deg;border-radius:var(--r-card)}
-.review__ava{background:#2F7BC4}
-.review:nth-child(3n+2) .review__ava{background:#FCC41C;color:#0A2C55}
-.review:nth-child(3n) .review__ava{background:#0A2C55}
-.rating .more{background:#FCC41C}
-
-/* ---------- поступление ---------- */
-.price{border-radius:28px;box-shadow:0 20px 44px rgba(4,14,30,.28)}
-.path__n{box-shadow:none}
 
 /* ---------- эмоции: фото и видео плавно «приближаются», когда появляются ---------- */
 @media (prefers-reduced-motion:no-preference){
   html.rv-ready :is(.frame,.tile,.dirc,.alb,.person,.chero,.ep,.trio__v).rv :is(img,video){scale:1.14;transition:scale 1.8s var(--ease),transform .7s var(--ease)}
   html.rv-ready :is(.frame,.tile,.dirc,.alb,.person,.chero,.ep,.trio__v).rv.is-in :is(img,video){scale:1}
-}
-
-/* ---------- программы: фото до краёв плитки ---------- */
-.tile__photo{right:0;top:0;bottom:0;width:44%;height:auto;aspect-ratio:auto;border-radius:0;box-shadow:none}
-.tile__photo img{height:100%}
-.tile__txt{max-width:52%}
-.tile h3{font-size:clamp(30px,3vw,46px)}
-.tile .tile__lvl{max-width:52%}
-.tile .more{position:relative;z-index:2}
-@media (max-width:860px){
-  .tile{grid-template-columns:minmax(0,1fr) 38%;padding:18px 0 18px 18px;column-gap:16px;min-height:178px}
-  .tile__photo{position:relative;grid-column:2;grid-row:1/4;width:auto;height:calc(100% + 36px);margin:-18px 0;align-self:stretch;border-radius:0;aspect-ratio:auto}
-  .tile__txt{max-width:none}
-  .tile h3{font-size:clamp(25px,7vw,34px)}
-  .tile .tile__lvl{max-width:none}
 }
 
 /* ---------- отзывы: крупная цитата родителя ---------- */
@@ -1078,17 +939,6 @@ html.rv-ready .trio__v:nth-child(2).rv.is-in{transform:none}
 .bigq figcaption b{display:block;color:#fff;font-weight:750}
 .bigq figcaption small{font-size:13.5px}
 @media (max-width:600px){.bigq{padding-top:44px;gap:18px}.bigq::before{font-size:110px}.bigq blockquote{font-size:27px}}
-
-/* без «объёмных» нижних кромок у плашек — плоско, как во всём сайте */
-.drawer__cta{background:#FCC41C;box-shadow:none}
-.sent__ok{background:#1FA855;box-shadow:none}
-.director__mk{background:#FCC41C}
-.route__bus{background:#FCC41C}
-.chip,.mi,.cg__ic,.path__n{box-shadow:none}
-
-/* ---------- запись и подвал ---------- */
-.formcard{border-radius:28px;box-shadow:0 24px 60px rgba(0,0,0,.35)}
-.field input{border-radius:14px}
 
 /* =====================================================================
    ДВИЖЕНИЕ: появление по словам и снизу, первый экран при загрузке
