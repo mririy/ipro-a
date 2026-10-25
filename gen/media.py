@@ -1,4 +1,5 @@
 """Готовит фото, постеры, видео и кадры 3D-макета для сайта Ай Про, версия A.
+3D-иллюстрации подводок (assets/img/3d, Microsoft Fluent Emoji 3D, MIT) лежат в репозитории готовыми.
 
 Видео пережимаются в H.264 (CRF 28, не больше 1280 px по длинной стороне, без звука, faststart):
 главное видео первого экрана — короткий фрагмент обзора школы, 1,5–3 МБ.
@@ -11,7 +12,7 @@ TOUR_SRC = '/home/claude/video/tour_hd.mp4'  # обзор школы 1080p (85 �
 SUMMER_CLUB_SRC = '/home/claude/video/summer_club_70.mp4'  # летний клуб, 70 с (как было на сайте)
 # видео в блоках и альбомах
 VIDEOS = ['terr_overview', 'clubs_dance', 'hero_live', 'terr_walk', 'club_wood', 'summer_yard', 'lessons',
-          'gal_craft_birdhouse', 'gal_club_judo', 'club_sand', 'gal_event_lastbell', 'moment', 'summer_club']
+          'gal_craft_birdhouse', 'gal_club_judo', 'club_sand', 'gal_event_lastbell', 'summer_club']
 OUT = sys.argv[1]
 WHAT = sys.argv[2] if len(sys.argv) > 2 else 'all'
 os.makedirs(OUT, exist_ok=True)
@@ -42,6 +43,7 @@ def brighter(im):
 # фото из архива сайта (имя на сайте: файл в архиве)
 photos = {
     'facade': 'img/real/terr01.jpg',  # фасад без многоэтажки за особняком
+    'mansion': 'img/real/poster_hero_live.jpg',  # обложка концепции: вход в особняк, светлый кадр
     'food': 'img/real/food_hd.jpg',
     'ped-argat': 'img/real/ped_Argat.jpg', 'ped-veselova': 'img/real/ped_Veselova.jpg',
     'ped-gordienko': 'img/real/ped_Gordienko.jpg', 'ped-melnikova': 'img/real/ped_Melnikova.jpg',
@@ -78,7 +80,7 @@ def wordmarks():
 def do_photos():
     for k, f in photos.items():
         jpg(os.path.join(SRC, f), f'{OUT}/img/{k}.jpg', fix=brighter if k == 'bus' else None, sm=True)
-    # постеры видео (moment — из самого видео, см. do_video)
+    # постеры видео
     for v in VIDEOS:
         f = os.path.join(SRC, 'img/posters', v + '.jpg')
         if os.path.exists(f):
@@ -86,12 +88,9 @@ def do_photos():
     jpg(os.path.join(SRC, 'img/real/poster_hero_school.jpg'), f'{OUT}/img/posters/hero_school.jpg', 1280, 76)
     jpg(os.path.join(SRC, 'img/real/poster_hero_live.jpg'), f'{OUT}/img/posters/hero_live.jpg', 1280, 76, sm=True)
     wordmarks()
-    # конец дня: ночной особняк — фон подвала
-    jpg(os.path.join(SRC, 'seq/night/f_034.webp'), f'{OUT}/img/night.jpg', 1108, 80)
-    # пролёт камеры днём: кадры 0–40 (дальше камера подходит слишком близко и картинка мылится)
-    os.makedirs(f'{OUT}/seq/estate', exist_ok=True)
-    for i in range(41):
-        shutil.copy(os.path.join(SRC, f'seq/estate/f_{i:03d}.webp'), f'{OUT}/seq/estate/f_{i:03d}.webp')
+    # покадровые сцены 3D-макета: днём (подлёт к входу) и ночью (отъезд камеры)
+    for seq in ['estate', 'night']:
+        shutil.copytree(os.path.join(SRC, 'seq', seq), f'{OUT}/seq/{seq}', dirs_exist_ok=True)
     for f in ['favicon.svg', 'apple-touch-icon.png', 'og.jpg']:
         shutil.copy(os.path.join(SRC, '..', f), f'{OUT}/{f}')
 
@@ -128,7 +127,6 @@ def do_video():
         enc(os.path.join(SRC, 'video', v + '.mp4'), f'{OUT}/video/{v}.mp4', crf=28, extra_in=cut, maxrate='1000k')
     # летний клуб в альбоме: прежняя 70-секундная версия, 540p
     enc(SUMMER_CLUB_SRC, f'{OUT}/video/summer_club.mp4', crf=30, vf='scale=-2:540', maxrate='600k')
-    poster(f'{OUT}/video/moment.mp4', f'{OUT}/img/posters/moment.jpg', 1.0, sm=True)
 
 
 if WHAT in ('photos', 'all'):
