@@ -127,18 +127,28 @@ def timehead(key):
             f'<p class="th__s">{e(phrase)}</p></div>')
 
 
+def mix(a, b, t):
+    """Смесь двух цветов #RRGGBB."""
+    a, b = a.lstrip('#'), b.lstrip('#')
+    return '#' + ''.join(f'{round(int(a[i:i + 2], 16) * (1 - t) + int(b[i:i + 2], 16) * t):02X}' for i in (0, 2, 4))
+
+
 _SKY = {'prev': None, 'tone': None}  # небо и тон предыдущей главы — главы собираются по порядку страницы
 
 
 def section(id_, title, body, sky, tone='light', cls='', extra=''):
     """Глава страницы. Небо главы — две краски сверху вниз (--s1, --s2); вверху оно перетекает из неба
-    предыдущей главы (--s0). Если тон меняется (светлая ↔ тёмная), глава заходит листом (is-cut)."""
+    предыдущей главы (--s0) через середину --sb. Если тон меняется (светлая ↔ тёмная), переход длиннее
+    и текст главы начинается ниже него (is-cut)."""
     s1, s2 = sky.split(',')
     s0 = _SKY['prev'] or s1
-    cut = _SKY['tone'] is not None and _SKY['tone'] != tone
+    prev_tone = _SKY['tone']
+    cut = prev_tone is not None and prev_tone != tone
     _SKY['prev'], _SKY['tone'] = s2, tone
+    # середина перехода: из тёмного в светлое — бледный тон новой главы (без грязно-серой середины), иначе — смесь двух
+    sb = mix(s1, '#FFFFFF', .55) if (cut and tone == 'light') else mix(s0, s1, .5)
     classes = f'sc sc--{tone}' + (' is-cut' if cut else '') + (f' {cls}' if cls else '')
-    return (f'<section class="{classes}" id="{id_}" data-title="{e(title)}" data-tone="{tone}" style="--s0:{s0};--s1:{s1};--s2:{s2}"{extra}>\n'
+    return (f'<section class="{classes}" id="{id_}" data-title="{e(title)}" data-tone="{tone}" style="--s0:{s0};--sb:{sb};--s1:{s1};--s2:{s2}"{extra}>\n'
             f'{body}\n</section>\n')
 
 
@@ -259,7 +269,6 @@ def concept():
     return section('concept', 'Концепция', body, '#FFFFFF,#FFFFFF', 'light', 'concept')
 
 
-PINS = [(330, 452, 'Особняк в 5 этажей'), (625, 588, 'Летний бассейн'), (505, 736, 'Охраняемая территория'), (150, 560, '1 га в парке')]
 
 
 def about():
@@ -271,13 +280,13 @@ def about():
         else:
             media = f'<img src="assets/img/{name}.jpg"{ss(name, "(max-width: 900px) 92vw, 45vw" if i % 3 == 0 else "(max-width: 900px) 46vw, 30vw")} alt="{e(label)}" loading="lazy">'
         tiles += f'<figure class="in-t rv">{media}<figcaption>{e(label)}</figcaption></figure>'
-    pins = ''.join(f'<li data-x="{x}" data-y="{y}"><span>{e(t)}</span></li>' for x, y, t in PINS)
+    pins = ''.join(f'<li data-x="{p['x']}" data-y="{p['y']}"><button type="button" class="pinb" data-open="pin-{p['key']}" aria-haspopup="dialog"><span>{e(p['label'])}{I('plus', 'pinb__plus')}</span></button></li>' for p in PINS)
     body = f'''  <div class="estate" data-seq="estate" data-frames="61" data-path="assets/seq/estate" data-ext="webp">
     <div class="pin">
       <canvas aria-hidden="true"></canvas>
       <img class="seq__poster" src="assets/seq/estate/f_000.webp" alt="3D-макет особняка школы: дом, сад, бассейн и ворота">
       <div class="estate__veil" aria-hidden="true"></div>
-      <div class="wrap estate__head">{kick(LEADINS['about'][1])}{h2(a['title'], a['title_em'])}</div>
+      <div class="wrap estate__head">{kick(LEADINS['about'][1])}{h2(a['title'], a['title_em'])}<p class="estate__tip"><i aria-hidden="true"></i>Нажмите на метку, чтобы узнать больше</p></div>
       <ul class="pins" aria-label="Что есть на территории">{pins}</ul>
       <div class="wrap estate__arrive"><b>Добро пожаловать</b><p>Школа ждёт ребёнка с 8:30 до 18:00</p></div>
     </div>
@@ -300,11 +309,12 @@ def programs():
     P = PROGRAMS_INTRO
     cards = ''
     for i, p in enumerate(PROGRAMS):
+        sub = f'<span class="lvl__a">{e(p["audience"])}</span>' if p['audience'] else ''
         cards += f'''<a class="lvl lvl--{p['key']}" style="--i:{i}" href="#m-{p['key']}" data-open="m-{p['key']}" aria-label="{e(p['title'])}, {e(aud(p))}: подробнее о программе">
-      <span class="lvl__top"><span class="lvl__n">0{p['step']}</span><span class="lvl__lvl">{e(p['level'])}</span></span>
-      <span class="lvl__txt"><b class="lvl__t">{e(p['title'])}</b><span class="lvl__a">{e(aud(p))}</span></span>
-      <span class="lvl__ph"><img src="assets/img/{p['img']}.jpg"{ss(p['img'], '(max-width: 900px) 90vw, 560px')} alt="" loading="lazy"></span>
-      {more('Программа и расписание')}
+      <img class="lvl__bg" src="assets/img/{p['img']}.jpg"{ss(p['img'], '(max-width: 900px) 100vw, 1320px')} alt="" loading="lazy">
+      <span class="lvl__n">0{p['step']}</span>
+      <span class="lvl__c"><span class="lvl__lvl">{e(p['level'])}</span><b class="lvl__t">{e(p['title'])}</b><span class="lvl__chip">{e(p['ages'])}</span>{sub}</span>
+      {more('Программа и расписание', cls='lvl__go')}
     </a>'''
     body = f'''  <div class="wrap">
     {timehead('programs')}
@@ -405,20 +415,19 @@ def summer():
 
 
 def reviews():
+    """Отзывы — как в версии B: рейтинг Яндекс Карт плашкой и карточки отзывов, листаются кнопками-стрелками."""
     r = REVIEWS
-    hi = r.get('hero', -1)
-    big = ''
-    if 0 <= hi < len(r['items']):
-        q, n, src = r['items'][hi]
-        big = f'<figure class="bigq"><blockquote data-split>«{q}»</blockquote><figcaption>{e(n)}, {e(src)}</figcaption></figure>'
-    cards = ''.join(f'<figure class="review rv"><blockquote>{q}</blockquote><figcaption><span class="review__ava" aria-hidden="true">{e(n[0])}</span><span><b>{e(n)}</b><small>{e(src)}</small></span></figcaption></figure>' for i, (q, n, src) in enumerate(r['items']) if i != hi)
+    cards = ''.join(f'<figure class="review"><span class="review__mk">{I("quote")}</span><blockquote>{q}</blockquote><figcaption><b>{e(n)}</b><span>{e(src)}</span></figcaption></figure>' for q, n, src in r['items'])
     st5 = ''.join(I('star', 'st') for _ in range(5))
     stars = f'<span class="stars" style="--v:{r["rating_value"] / 5:.3f}"><span class="stars__bg">{st5}</span><span class="stars__fg">{st5}</span></span>'
     body = f'''  <div class="wrap">
-    {kick(r['title'] + ' ' + r['title_em'], 'h2')}
-    {big}
-    <a class="rating rv" href="{CONTACTS['map']}" target="_blank" rel="noopener"><b>{r['rating']}</b><span class="rating__r">{stars}<span>{e(r['count'])} на Яндекс Картах</span><span class="more">Все отзывы{I('arrow-up-right')}</span></span></a>
-    <div class="revs">{cards}</div>
+    {kick('Что говорят о школе')}
+    {h2(r['title'], r['title_em'])}
+    <a class="rating rv" href="{CONTACTS['map']}" target="_blank" rel="noopener"><b>{r['rating']}</b>{stars}<span class="rating__t">{e(r['count'])} на Яндекс Картах</span><span class="rating__go">Все отзывы{I('arrow-up-right')}</span></a>
+    <div class="carousel rv">
+      <div class="carousel__track" tabindex="0" aria-label="Отзывы родителей">{cards}</div>
+      <div class="carousel__nav"><button type="button" data-dir="-1" aria-label="Предыдущий отзыв">{I('arrow-left')}</button><button type="button" data-dir="1" aria-label="Следующий отзыв">{I('arrow-right')}</button></div>
+    </div>
   </div>'''
     return section('reviews', 'Отзывы', body, '#B24F4E,#2B3F7A', 'dark', 'reviews')
 
@@ -581,6 +590,25 @@ def program_dialog(p, prev, nxt):
 '''
 
 
+def pin_dialogs():
+    out = ''
+    for p in PINS:
+        kind, target, label = p['go']
+        btn = (f'<button class="pill pill--sun" type="button" data-album="{target}">{e(label)} {I("arrow-right")}</button>' if kind == 'album'
+               else f'<a class="pill pill--sun" href="#{target}" data-close-go="{target}">{e(label)} {I("arrow-right")}</a>')
+        out += f'''<dialog class="sheet pinsheet" id="pin-{p['key']}" aria-labelledby="pinT-{p['key']}">
+  <figure class="pinsheet__ph"><img src="assets/img/{p['photo']}.jpg"{ss(p['photo'], '(max-width: 900px) 100vw, 720px')} alt="{e(p['alt'])}" loading="lazy"><button class="xbtn" type="button" data-close aria-label="Закрыть">{I('x')}</button></figure>
+  <div class="sheet__body">
+    <p class="kick">{e(p['label'])}</p>
+    <h2 class="pinsheet__t" id="pinT-{p['key']}">{e(p['title'])}</h2>
+    {ilist(p['items'])}
+    <div class="pinsheet__go">{btn}</div>
+  </div>
+</dialog>
+'''
+    return out
+
+
 def docs_dialog():
     c = CONTACTS
     docs = ''.join(f'<li>{I(ic)}<span><b>{e(t)}</b>{e(s)}</span></li>' for ic, t, s in ADMISSION['docs'])
@@ -656,6 +684,41 @@ def helper_dialog():
 '''
 
 
+# ---------------------------------------------------------------- неразрывные пробелы
+NB = '\u00A0'
+SHORT = r'а|и|в|во|с|со|к|ко|у|о|об|обо|от|до|на|по|за|из|изо|без|для|под|над|при|про|не|ни|но|да|я|мы|вы|ее|её|их|это|все|всё|как|что|или|уже|ещё|еще|так|при'
+RE_SHORT = re.compile(r'(?<![\w\-])(' + SHORT + r') (?=(\S+))', re.I)
+RE_AFTER = re.compile(r' (же|ли|бы)(?![\w\-])', re.I)
+RE_NUM = re.compile(r'(\d) (?=[\dА-Яа-яЁё%₽])')
+RE_DASH = re.compile(r' ([—–]) ')
+
+
+def typo(t):
+    """Короткие слова и числа не остаются в конце строки, тире не начинает строку, «Ай Про» не разрывается."""
+    # связка не длиннее 15 знаков, иначе крупный заголовок не влезет в строку на телефоне
+    t = RE_SHORT.sub(lambda m: m.group(1) + (NB if len(m.group(1)) + len(m.group(2)) <= 15 else ' '), t)
+    t = RE_AFTER.sub(lambda m: NB + m.group(1), t)
+    t = RE_NUM.sub(lambda m: m.group(1) + NB, t)
+    t = RE_DASH.sub(lambda m: NB + m.group(1) + ' ', t)
+    return t.replace('Ай Про', 'Ай' + NB + 'Про')
+
+
+def typo_html(h):
+    """Применяет typo() к тексту между тегами (и к данным JSON в странице); стили, разметка и пути SVG не трогаются."""
+    out, skip = [], None
+    for part in re.split(r'(<[^>]+>)', h):
+        if part.startswith('<'):
+            low = part.lower()
+            if low.startswith('<style') or (low.startswith('<script') and 'application/json' not in low):
+                skip = 'style' if low.startswith('<style') else 'script'
+            elif skip and low.startswith('</' + skip):
+                skip = None
+            out.append(part)
+        else:
+            out.append(part if skip else typo(part))
+    return ''.join(out)
+
+
 def sprite():
     out = []
     for n in sorted(USED):
@@ -681,7 +744,7 @@ def page():
             + extra() + transfer() + summer() + reviews() + admission() + gallery() + night() + signup())
     n = len(PROGRAMS)
     dialogs = ''.join(program_dialog(p, PROGRAMS[(i - 1) % n], PROGRAMS[(i + 1) % n]) for i, p in enumerate(PROGRAMS))
-    dialogs += menu_dialog() + docs_dialog() + album_dialog() + lightbox() + helper_dialog()
+    dialogs += menu_dialog() + pin_dialogs() + docs_dialog() + album_dialog() + lightbox() + helper_dialog()
     desc = 'Ай Про (IPROSCHOOL) — частная школа полного дня в Ялте для детей 4–18 лет: детский сад и школа в историческом особняке, малые группы до 14 человек, языки с носителями, кружки, питание и трансфер. Три пробных дня бесплатно.'
     return f'''<!doctype html>
 <html lang="ru">
@@ -720,6 +783,7 @@ if __name__ == '__main__':
     html_out = page()
     html_out = html_out.replace('{SPRITE}', sprite())
     html_out = add_dims(html_out)
+    html_out = typo_html(html_out)
     open(os.path.join(OUT, 'index.html'), 'w', encoding='utf8').write(html_out)
     os.makedirs(os.path.join(OUT, 'assets/data'), exist_ok=True)
     np = os.path.join(OUT, 'assets/data/news.json')

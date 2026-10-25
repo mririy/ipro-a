@@ -90,9 +90,9 @@
       [].slice.call(node.childNodes).forEach(function (c) {
         if (c.nodeType === 3) {
           var f = d.createDocumentFragment();
-          c.textContent.split(/(\s+)/).forEach(function (p) {
+          c.textContent.split(/([ \t\r\n]+)/).forEach(function (p) {
             if (!p) return;
-            if (/^\s+$/.test(p)) { f.appendChild(d.createTextNode(' ')); return; }
+            if (/^[ \t\r\n]+$/.test(p)) { f.appendChild(d.createTextNode(' ')); return; }
             var sp = d.createElement('span'); sp.className = 'w'; sp.style.setProperty('--wi', n++); sp.textContent = p; f.appendChild(sp);
           });
           c.parentNode.replaceChild(f, c);
@@ -223,7 +223,7 @@
   }
   function placePins(box, pe, all) {
     pins.forEach(function (li, idx) {
-      li.classList.toggle('on', all || (pe > .02 + idx * .05 && pe < .3));
+      li.classList.toggle('on', all || (pe > .02 + idx * .04 && pe < .44));
       if (!box || !li._w) return;
       var x = box.x + (+li.dataset.x) * box.s, y = box.y + (+li.dataset.y) * box.s, left = x > vw / 2;
       li.classList.toggle('l', left);
@@ -343,12 +343,12 @@
       if (sDay) {
         moving = smooth('estate', progress(rEst), k) || moving;
         if (near(rEst) && sDay.started) {
-          var pe = sm.estate, fly = ease(seg(pe, .3, .92)), fi = Math.round(fly * (sDay.n - 1));
+          var pe = sm.estate, fly = ease(seg(pe, .44, .94)), fi = Math.round(fly * (sDay.n - 1));
           sDay.offY = (wide ? .06 : .05) * (1 - fly);
           sDay.offX = wide ? .2 * (1 - fly) : 0;
           sDay.cur = fi; sDay.draw(fi, wide ? lerp(.25, 1, fly) : lerp(.32, 1, fly));
-          estatePin.style.setProperty('--headop', (1 - seg(pe, .28, .4)).toFixed(3));
-          estatePin.style.setProperty('--arr', seg(pe, .86, .97).toFixed(3));
+          estatePin.style.setProperty('--headop', (1 - seg(pe, .42, .52)).toFixed(3));
+          estatePin.style.setProperty('--arr', seg(pe, .88, .98).toFixed(3));
           placePins(sDay.box, pe, false);
         }
       }
@@ -356,7 +356,8 @@
       /* 3. коллаж: колонки едут с разной скоростью */
       if (rCols && rCols.bottom > -200 && rCols.top < vh + 200) {
         var lp = (vh - rCols.top) / (vh + rCols.height);
-        cols.forEach(function (c) { c.style.transform = 'translate3d(0,' + ((lp - .5) * (+c.dataset.speed) * rCols.height).toFixed(1) + 'px,0)'; });
+        var amp = wide ? 520 : 360;
+        cols.forEach(function (c) { c.style.transform = 'translate3d(0,' + ((lp - .5) * (+c.dataset.speed) * amp).toFixed(1) + 'px,0)'; });
       }
 
       /* 4. программы: следующая карточка накрывает предыдущую, та чуть отступает в глубину */
@@ -567,6 +568,24 @@
     }, { passive: true });
   })();
 
+  /* ---------------- отзывы: листание стрелками ---------------- */
+  $$('.carousel').forEach(function (c) {
+    var tr = $('.carousel__track', c), bs = $$('.carousel__nav button', c);
+    var sync = function () {
+      var max = tr.scrollWidth - tr.clientWidth - 2;
+      bs[0].disabled = tr.scrollLeft <= 2; bs[1].disabled = tr.scrollLeft >= max;
+    };
+    bs.forEach(function (b) {
+      b.addEventListener('click', function () {
+        var card = tr.firstElementChild, step = card ? card.getBoundingClientRect().width + 14 : 300;
+        tr.scrollBy({ left: step * (+b.dataset.dir), behavior: still() ? 'auto' : 'smooth' });
+      });
+    });
+    tr.addEventListener('scroll', sync, { passive: true });
+    addEventListener('resize', sync);
+    sync();
+  });
+
   /* ---------------- новости и объявления: assets/data/news.json ---------------- */
   (function () {
     var list = $('#newsList'), sec = $('#news');
@@ -577,6 +596,10 @@
       if (!m) return s || '';
       var mon = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
       return (+m[3]) + ' ' + mon[+m[2] - 1] + ' ' + m[1];
+    };
+    var nb = function (t) {  /* короткие слова и числа не остаются в конце строки */
+      return String(t == null ? '' : t).replace(/(^|[\s(«])(а|и|в|во|с|со|к|ко|у|о|об|от|до|на|по|за|из|без|для|под|над|при|про|не|ни|но|да|я|как|что|это) /gi, '$1$2\u00A0')
+        .replace(/(\d) (?=[\dА-Яа-яЁё])/g, '$1\u00A0').replace(/ ([—–]) /g, '\u00A0$1 ').replace(/Ай Про/g, 'Ай\u00A0Про');
     };
     var safe = function (u) { return /^(#|https?:|tel:|mailto:|\/|\.\/|[\w-]+\.html)/i.test(String(u || '').trim()) ? u : ''; };
     function render(items) {
@@ -589,7 +612,7 @@
         return '<article class="news__card is-in' + (n.pin ? ' is-pin' : '') + '">' +
           (n.image ? '<img src="' + escH(n.image) + '" alt="" loading="lazy">' : '') +
           '<div class="news__meta">' + (n.tag ? '<span class="news__tag">' + escH(n.tag) + '</span>' : '') + (n.date ? '<time datetime="' + escH(n.date) + '">' + escH(fmtDate(n.date)) + '</time>' : '') + '</div>' +
-          '<h3>' + escH(n.title) + '</h3><p>' + escH(n.text) + '</p>' +
+          '<h3>' + escH(nb(n.title)) + '</h3><p>' + escH(nb(n.text)) + '</p>' +
           (n.link ? '<a class="news__more" href="' + escH(n.link) + '"' + go + (/^https?:/.test(n.link) ? ' target="_blank" rel="noopener"' : '') + '>' + escH(n.link_text || 'Подробнее') + arrow + '</a>' : '') +
           '</article>';
       }).join('');
