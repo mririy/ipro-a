@@ -67,7 +67,7 @@ def kick(text, tag='p'):
 def h2(title, em='', cls='h2'):
     t = e(title) + (f' <em>{e(em)}</em>' if em else '')
     longest = max(len(w) for w in (title + ' ' + em).split())
-    if longest >= 14 and 'h2--xl' not in cls:  # «Профессиональная», «образовательная»: на телефоне такое слово не влезет в строку крупным кеглем
+    if longest >= 12 and 'h2--xl' not in cls:  # «Профессиональная», «образовательная»: на телефоне такое слово не влезет в строку крупным кеглем
         cls += ' h2--long'
     return f'<h2 class="{cls}" data-split>{t}</h2>'
 
@@ -217,8 +217,11 @@ def news():
     cards = ''.join(news_card(n) for n in NEWS_SEED)
     data = json.dumps(NEWS_SEED, ensure_ascii=False)
     body = f'''  <div class="wrap">
-    <div class="news__head">{kick('Новости и объявления', 'h2')}</div>
-    <div class="news__list" id="newsList">{cards}</div>
+    <h2 class="news__h">Новости и объявления</h2>
+    <div class="carousel carousel--news">
+      <div class="carousel__track news__list" id="newsList" tabindex="0" aria-label="Новости и объявления">{cards}</div>
+      <div class="carousel__nav"><button type="button" data-dir="-1" aria-label="Предыдущая новость">{I('arrow-left')}</button><button type="button" data-dir="1" aria-label="Следующая новость">{I('arrow-right')}</button></div>
+    </div>
   </div>
   <script type="application/json" id="newsSeed">{data}</script>'''
     return section('news', 'Новости', body, '#FFFFFF,#F2F8FE', 'light', 'news')
@@ -249,10 +252,10 @@ def concept():
         figs = ''.join(f'<figure style="--ar:{ar}"><img src="{small("assets/img/" + n + ".jpg")}" alt="{e(alt)}" decoding="async"></figure>' for n, alt, ar in col)
         cols += f'<div class="col" data-speed="{(-0.14, 0.1, -0.24)[ci]}">{figs}</div>'
     stats = ''
-    for n, l, _ in c['stats']:
+    for (n, l, _), ic in zip(c['stats'], ('calendar-days', 'users', 'graduation-cap', 'clock')):
         digits = re.sub(r'[^0-9]', '', n)
         cnt = f' data-count="{digits}"' if n.isdigit() or n.endswith('+') else ''
-        stats += f'<div class="num rv"><b{cnt}>{e(n)}</b><span>{e(l)}</span></div>'
+        stats += f'<div class="num rv">{I(ic, "num__i")}<b{cnt}>{e(n)}</b><span>{e(l)}</span></div>'
     groups = ''
     for title, tone, items in c['groups']:
         groups += f'<article class="grp grp--{tone} rv"><h3>{e(title)}</h3>{ilist(items)}</article>'
@@ -688,6 +691,7 @@ def helper_dialog():
 NB = '\u00A0'
 SHORT = r'а|и|в|во|с|со|к|ко|у|о|об|обо|от|до|на|по|за|из|изо|без|для|под|над|при|про|не|ни|но|да|я|мы|вы|ее|её|их|это|все|всё|как|что|или|уже|ещё|еще|так|при'
 RE_SHORT = re.compile(r'(?<![\w\-])(' + SHORT + r') (?=(\S+))', re.I)
+RE_TAIL = re.compile(r'(?<![\w\-])(' + SHORT + r') $', re.I)
 RE_AFTER = re.compile(r' (же|ли|бы)(?![\w\-])', re.I)
 RE_NUM = re.compile(r'(\d) (?=[\dА-Яа-яЁё%₽])')
 RE_DASH = re.compile(r' ([—–]) ')
@@ -715,7 +719,7 @@ def typo_html(h):
                 skip = None
             out.append(part)
         else:
-            out.append(part if skip else typo(part))
+            out.append(part if skip else RE_TAIL.sub(lambda m: m.group(1) + NB, typo(part)))
     return ''.join(out)
 
 

@@ -574,6 +574,7 @@
     var sync = function () {
       var max = tr.scrollWidth - tr.clientWidth - 2;
       bs[0].disabled = tr.scrollLeft <= 2; bs[1].disabled = tr.scrollLeft >= max;
+      bs[0].parentNode.hidden = bs[0].disabled && bs[1].disabled;  /* всё помещается — стрелки не нужны */
     };
     bs.forEach(function (b) {
       b.addEventListener('click', function () {
@@ -616,6 +617,7 @@
           (n.link ? '<a class="news__more" href="' + escH(n.link) + '"' + go + (/^https?:/.test(n.link) ? ' target="_blank" rel="noopener"' : '') + '>' + escH(n.link_text || 'Подробнее') + arrow + '</a>' : '') +
           '</article>';
       }).join('');
+      dispatchEvent(new Event('resize'));  /* пересчитать стрелки ленты */
     }
     var seed = [];
     try { seed = JSON.parse($('#newsSeed').textContent); } catch (e) {}
