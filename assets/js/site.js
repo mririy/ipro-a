@@ -1,8 +1,8 @@
 /* =====================================================================
-   Ай Про · IPROSCHOOL — сценарий сайта
-   Версия A: день в Ай Про — подводки к блокам по часам,
-   палитры глав смешиваются кадр за кадром, покадровые сцены 3D-макета, автобус по маршруту,
-   окна программ, галерея, форма записи, новости, помощник.
+   Ай Про (IPROSCHOOL) — сценарий сайта, версия A
+   Один день в школе: глава переключается, когда её заголовок пересекает 40 % окна;
+   шкала дня 08:30 → 18:00 заполняется при прокрутке. Видео: сначала постер, у каждого — пауза.
+   Окна программ, альбомы, форма записи, новости, помощник, версия для слабовидящих.
    ===================================================================== */
 (function () {
   'use strict';
@@ -10,121 +10,161 @@
   var reduceMQ = matchMedia('(prefers-reduced-motion: reduce)');
   var reduce = reduceMQ.matches;
   if (reduceMQ.addEventListener) reduceMQ.addEventListener('change', function (e) { reduce = e.matches; });
-  var fine = matchMedia('(hover: hover) and (pointer: fine)').matches;
+  var wideMQ = matchMedia('(min-width: 1024px)');
   var $ = function (s, c) { return (c || d).querySelector(s); };
   var $$ = function (s, c) { return [].slice.call((c || d).querySelectorAll(s)); };
   var clamp01 = function (v) { return Math.max(0, Math.min(1, v)); };
   var isA11y = function () { return root.classList.contains('a11y'); };
   var tryPlay = function (v) { var p = v.play(); if (p && p.catch) p.catch(function () {}); };
+  var still = function () { return reduce || isA11y(); };
+  function anyOpen() { return $('dialog[open]'); }
 
-  /* ---------------- первый экран: горизонтальное видео или вертикальное на телефоне ---------------- */
-  var introV = $('.intro__v');
-  (function () {
-    if (!introV) return;
-    var mq = matchMedia('(orientation: portrait) and (max-width: 820px)');
-    var pick = function () {
-      var port = mq.matches;
-      var src = port ? introV.dataset.srcPort : introV.dataset.srcLand;
-      if (introV.getAttribute('src') === src) return;
-      introV.setAttribute('poster', port ? introV.dataset.posterPort : introV.dataset.posterLand);
-      introV.src = src; introV.muted = true; tryPlay(introV);
-    };
-    pick();
-    if (mq.addEventListener) mq.addEventListener('change', pick);
-  })();
-
-  /* ---------------- главы, палитры, капсула, точки ---------------- */
-  var scenes = $$('main .sc');
-  var themeMeta = $('meta[name="theme-color"]');
-  var chapNum = $('#chapNum'), chapName = $('#chapName'), chapBtn = $('#menuBtn'), bar = $('.dock__bar');
-  var KEYS = ['bg', 'fg', 'muted', 'accent', 'aura', 'band', 'card', 'line'];
-  var AURA = [[74, 46], [22, 30], [72, 40], [28, 62], [76, 56], [24, 34], [62, 30], [40, 64], [72, 44], [30, 50]];
-  scenes.forEach(function (s, i) {
-    var a = AURA[i % AURA.length];
-    s.style.setProperty('--ax', a[0] + '%'); s.style.setProperty('--ay', a[1] + '%'); s.style.setProperty('--ry', Math.min(a[1], 100 - a[1]) + '%');
-  });
-
-  var parse = function (v) {
-    var m = v.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
-    if (m) { var h = m[1]; if (h.length === 3) h = h.replace(/./g, function (c) { return c + c; }); return [0, 2, 4].map(function (j) { return parseInt(h.slice(j, j + 2), 16); }).concat(1); }
-    m = v.match(/^rgba?\(([^)]+)\)$/i);
-    if (m) { var p = m[1].split(/[\s,\/]+/).filter(Boolean).map(parseFloat); if (p.length >= 3) return [p[0], p[1], p[2], p.length > 3 ? p[3] : 1]; }
-    return null;
-  };
-  var fmt = function (c) { return 'rgba(' + Math.round(c[0]) + ',' + Math.round(c[1]) + ',' + Math.round(c[2]) + ',' + (+c[3].toFixed(3)) + ')'; };
-  var FADE = 1400, FADE_AURA = 1900, pal = null, palRaf = 0;
-  var easeOut = function (t) { return 1 - (1 - t) * (1 - t); };
-  function fadeTo(s, instant) {
-    var cs = getComputedStyle(s), raw = {}, to = {};
-    KEYS.forEach(function (k) { raw[k] = cs.getPropertyValue('--s-' + k).trim(); to[k] = parse(raw[k]); });
-    cancelAnimationFrame(palRaf);
-    var ok = KEYS.every(function (k) { return to[k]; });
-    if (!pal || reduce || instant || !ok) {
-      KEYS.forEach(function (k) { if (raw[k]) root.style.setProperty('--' + k, raw[k]); });
-      if (themeMeta && raw.bg) themeMeta.setAttribute('content', raw.bg);
-      pal = ok ? KEYS.reduce(function (o, k) { o[k] = to[k].slice(); return o; }, {}) : null;
-      return;
-    }
-    var from = KEYS.reduce(function (o, k) { o[k] = pal[k].slice(); return o; }, {}), t0 = performance.now();
-    var step = function (now) {
-      var done = true;
-      KEYS.forEach(function (k) {
-        var p = Math.min(1, Math.max(0, now - t0) / (k === 'aura' ? FADE_AURA : FADE));
-        if (p < 1) done = false;
-        var e = easeOut(p);
-        pal[k] = from[k].map(function (a, j) { return a + (to[k][j] - a) * e; });
-        root.style.setProperty('--' + k, fmt(pal[k]));
-      });
-      if (themeMeta) themeMeta.setAttribute('content', fmt(pal.bg));
-      if (!done) palRaf = requestAnimationFrame(step);
-    };
-    palRaf = requestAnimationFrame(step);
+  /* ---------------- видео: кнопки паузы ---------------- */
+  function setVBtn(b, paused) {
+    if (!b) return;
+    b.setAttribute('aria-pressed', paused ? 'true' : 'false');
+    b.setAttribute('aria-label', paused ? 'Включить видео' : 'Остановить видео');
   }
-
-  var MENU_OF = { news: 'news', concept: 'concept', about: 'concept', programs: 'programs', food: 'food', teachers: 'teachers', safety: 'safety', extra: 'extra', transfer: 'transfer', summer: 'summer', reviews: 'reviews', gallery: 'gallery' };
-  var nav = $('.dots');
-  var dots = scenes.map(function (s, i) {
-    var b = d.createElement('button');
-    b.type = 'button';
-    if (s.classList.contains('act')) b.className = 'is-act';
-    b.setAttribute('aria-label', (s.dataset.num ? s.dataset.num + ' · ' : '') + s.dataset.title);
-    var sp = d.createElement('span'); sp.textContent = s.dataset.title; b.appendChild(sp);
-    b.addEventListener('click', function () { go(s); });
-    nav.appendChild(b);
-    return b;
-  });
-  var active = -1;
-  var narrowMQ = matchMedia('(max-width: 560px)');
-  function setActive(i) {
-    if (i < 0 || i === active) return;
-    active = i;
-    var s = scenes[i];
-    fadeTo(s);
-    chapNum.textContent = s.dataset.num || '';
-    chapName.textContent = (narrowMQ.matches && s.dataset.short) || s.dataset.title || '';
-    if (!reduce) { chapBtn.classList.remove('swap'); void chapBtn.offsetWidth; chapBtn.classList.add('swap'); }
-    dots.forEach(function (b, j) { b.setAttribute('aria-current', j === i ? 'true' : 'false'); });
-    var m = MENU_OF[s.id];
-    $$('.menu a[data-go]').forEach(function (a) { a.setAttribute('aria-current', a.dataset.go === m ? 'true' : 'false'); });
-    var ask = $('.ask');
-    if (ask) ask.classList.toggle('is-hidden', s.id === 'signup');
-  }
-  /* активная глава — последняя (по порядку) из тех, что пересекают середину экрана:
-     видео в начале «прилипает» и пересекает её всегда, поэтому одного события «вошла» мало */
-  var crossing = [];
-  var sceneIO = new IntersectionObserver(function (es) {
-    es.forEach(function (e) {
-      var k = crossing.indexOf(e.target);
-      if (e.isIntersecting && k < 0) crossing.push(e.target);
-      if (!e.isIntersecting && k >= 0) crossing.splice(k, 1);
+  var introV = $('.intro__v'), heroBtn = $('.vbtn--hero');
+  $$('[data-vtoggle]').forEach(function (b) {
+    var v = b.parentElement.querySelector('video');
+    if (!v) return;
+    setVBtn(b, true);
+    v.addEventListener('play', function () { setVBtn(b, false); });
+    v.addEventListener('pause', function () { setVBtn(b, true); });
+    b.addEventListener('click', function () {
+      if (v.paused) {
+        v._userPaused = false;
+        if (v === introV && !v.getAttribute('src')) startHero(true);
+        tryPlay(v);
+      } else { v._userPaused = true; v.pause(); }
     });
+  });
+
+  /* ---------------- первый экран: постер сразу, видео — после загрузки страницы ---------------- */
+  var heroStarted = false;
+  var portMQ = matchMedia('(orientation: portrait) and (max-width: 1023px)');
+  function heroSrc() { return portMQ.matches ? introV.dataset.srcPort : introV.dataset.srcLand; }
+  function startHero(force) {
+    if (!introV) return;
+    heroStarted = true;
+    if (introV.getAttribute('src') !== heroSrc()) introV.src = heroSrc();
+    introV.muted = true;
+    if (force || (!still() && !introV._userPaused)) tryPlay(introV);
+  }
+  if (introV) {
+    var kick = function () { setTimeout(function () { startHero(false); }, 150); };
+    if (d.readyState === 'complete') kick(); else addEventListener('load', kick);
+    if (portMQ.addEventListener) portMQ.addEventListener('change', function () { if (heroStarted) startHero(false); });
+  }
+
+  /* постеры видео в блоках — когда блок рядом; на телефоне — уменьшенная копия */
+  var posterIO = new IntersectionObserver(function (es) {
+    es.forEach(function (e) {
+      if (!e.isIntersecting) return;
+      var v = e.target; posterIO.unobserve(v);
+      var big = v.clientWidth * Math.min(window.devicePixelRatio || 1, 2) > 700;
+      v.poster = big ? v.dataset.poster : (v.dataset.posterSm || v.dataset.poster);
+    });
+  }, { rootMargin: '800px 0px' });
+  $$('video[data-poster]').forEach(function (v) { posterIO.observe(v); });
+
+  /* видео в блоках: играют, только когда на экране; при «Уменьшить движение» — постер и кнопка */
+  var vidIO = new IntersectionObserver(function (es) {
+    es.forEach(function (e) {
+      var v = e.target;
+      if (e.isIntersecting) { if (v.paused && !v._userPaused && !still()) tryPlay(v); }
+      else if (!v.paused) v.pause();
+    });
+  }, { threshold: 0.35 });
+  $$('main video').forEach(function (v) { v.muted = true; if (v !== introV) vidIO.observe(v); });
+
+  /* ---------------- шапка, главы, шкала дня ---------------- */
+  var hdr = $('#hdr'), chTime = $('#chTime'), chName = $('#chName'), menuBtn = $('#menuBtn');
+  var intro = $('.intro'), sheet = $('.drw__sheet');
+  var scenes = $$('main .sec');
+  var heads = scenes.map(function (s) { return $('.sec__head', s) || s; });
+  var themeMeta = $('meta[name="theme-color"]');
+  var BG = { white: '#FFFFFF', alt: '#F4F7FB', navy: '#0A2C55' };
+  var active = -2;
+  function bgOf(s) { var m = / bg-(\w+)/.exec(' ' + s.className); return m ? BG[m[1]] : '#FFFFFF'; }
+  function setActive(i) {
+    if (i === active) return;
+    active = i;
+    var s = i >= 0 ? scenes[i] : null, id = s ? s.id : 'top';
+    if (chTime) chTime.textContent = s ? (s.dataset.time || '') : '';
+    if (chName) chName.textContent = s ? (s.dataset.short || s.dataset.title || '') : '';
+    $$('.menu a[data-go], .hdr__nav a').forEach(function (a) { a.setAttribute('aria-current', a.dataset.go === id ? 'true' : 'false'); });
+    if (themeMeta) themeMeta.setAttribute('content', s ? bgOf(s) : '#0A2C55');
+  }
+
+  var toMin = function (t) { var m = /^(\d{1,2}):(\d{2})$/.exec(t || ''); return m ? (+m[1]) * 60 + (+m[2]) : 0; };
+  var dayEls = ['programs', 'food', 'extra', 'transfer'].map(function (k) { return d.getElementById(k); }).filter(Boolean);
+  var dayMin = dayEls.map(function (el) { return toMin(el.dataset.time); });
+  var D0 = dayMin[0], D1 = dayMin[dayMin.length - 1];
+  var tlPts = $$('.tl__pt'), rail = $('.rail'), railPts = $$('.rail__pt');
+  function dayNow(line) {
+    if (!dayEls.length) return null;
+    var y = scrollY + line;
+    var ys = dayEls.map(function (el) { return ($('.sec__head', el) || el).getBoundingClientRect().top + scrollY; });
+    var last = dayEls[dayEls.length - 1], end = last.getBoundingClientRect().bottom + scrollY;
+    if (y < ys[0] || y > end) return null;
+    for (var k = 0; k < ys.length - 1; k++) {
+      if (y < ys[k + 1]) return dayMin[k] + (dayMin[k + 1] - dayMin[k]) * clamp01((y - ys[k]) / (ys[k + 1] - ys[k]));
+    }
+    return D1;
+  }
+  function markDay(pts, m) {
+    pts.forEach(function (p, k) {
+      var t = dayMin[k], next = k + 1 < dayMin.length ? dayMin[k + 1] : Infinity;
+      p.classList.toggle('is-now', m !== null && m >= t - 0.5 && m < next - 0.5);
+      p.classList.toggle('is-past', m !== null && m >= next - 0.5);
+    });
+  }
+
+  /* нижняя панель на телефоне: после первого экрана, кроме записи и подвала */
+  var bbar = $('.bbar'), atSignup = false, nearFoot = false;
+  function updBar() {
+    if (!bbar) return;
+    bbar.classList.toggle('is-on', scrollY > innerHeight * 0.6 && !atSignup && !nearFoot && !anyOpen());
+  }
+  var endIO = new IntersectionObserver(function (es) {
+    es.forEach(function (e) { if (e.target.id === 'signup') atSignup = e.isIntersecting; else nearFoot = e.isIntersecting; });
+    root.classList.toggle('at-signup', atSignup);
+    updBar();
+  }, { threshold: 0.12 });
+  ['signup', 'contacts'].forEach(function (id) { var el = d.getElementById(id); if (el) endIO.observe(el); });
+
+  var ticking = false;
+  function frame() {
+    ticking = false;
+    var vh = innerHeight, line = vh * 0.4;
+    /* лист-дровер: видео тускнеет и встаёт на паузу, когда лист его закрыл */
+    var sheetTop = sheet ? sheet.getBoundingClientRect().top : -1;
+    var onHero = sheetTop > (hdr ? hdr.offsetHeight : 56) - 1;
+    if (hdr) hdr.classList.toggle('is-hero', onHero);
+    root.classList.toggle('on-hero', onHero);
+    if (intro) intro.style.setProperty('--dp', still() ? 0 : clamp01(scrollY / vh).toFixed(3));
+    if (sheet) sheet.style.setProperty('--sh', clamp01(scrollY / 80).toFixed(2));
+    if (introV && heroStarted) {
+      if (sheetTop <= 0) { if (!introV.paused) { introV.pause(); introV._covered = true; } }
+      else if (introV._covered && introV.paused && !introV._userPaused) { introV._covered = false; tryPlay(introV); }
+    }
+    /* глава — последняя, чей заголовок пересёк 40 % высоты окна */
     var idx = -1;
-    scenes.forEach(function (s, i) { if (crossing.indexOf(s) >= 0) idx = i; });
-    if (idx >= 0) setActive(idx);
-  }, { rootMargin: '-50% 0px -49% 0px' });
-  scenes.forEach(function (s) { sceneIO.observe(s); });
-  fadeTo(scenes[0], true);
-  setActive(0);
+    for (var i = 0; i < heads.length; i++) { if (heads[i].getBoundingClientRect().top <= line) idx = i; else break; }
+    setActive(onHero ? -1 : idx);
+    /* шкала дня */
+    var m = onHero ? null : dayNow(line);
+    var inDay = m !== null;
+    if (hdr) hdr.classList.toggle('in-day', inDay);
+    if (rail) rail.classList.toggle('is-on', inDay && !wideMQ.matches && !isA11y());
+    if (inDay) root.style.setProperty('--p', clamp01((m - D0) / (D1 - D0)).toFixed(4));
+    markDay(tlPts, m); markDay(railPts, m);
+    updBar();
+    updSeqs(); updRoute();
+  }
+  addEventListener('scroll', function () { if (!ticking) { ticking = true; requestAnimationFrame(frame); } }, { passive: true });
 
   function go(target) {
     var el = typeof target === 'string' ? d.getElementById(target) : target;
@@ -132,67 +172,25 @@
     el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
   }
   addEventListener('keydown', function (e) {
-    if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || $('dialog[open]')) return;
+    if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || anyOpen()) return;
     var t = e.target;
-    if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+    if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || (t.closest && t.closest('.hs')))) return;
     if (e.key === 'ArrowRight') { e.preventDefault(); go(scenes[Math.min(scenes.length - 1, active + 1)]); }
-    else if (e.key === 'ArrowLeft') { e.preventDefault(); go(scenes[Math.max(0, active - 1)]); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); go(active <= 0 ? 'top' : scenes[active - 1]); }
   });
 
-  /* ---------------- появление: заголовки по словам, блоки снизу ---------------- */
-  $$('[data-split]').forEach(function (el) {
-    var n = 0;
-    (function walk(node) {
-      [].slice.call(node.childNodes).forEach(function (c) {
-        if (c.nodeType === 3) {
-          var f = d.createDocumentFragment();
-          c.textContent.split(/(\s+)/).forEach(function (p) {
-            if (!p) return;
-            if (/^\s+$/.test(p)) { f.appendChild(d.createTextNode(' ')); return; }
-            var sp = d.createElement('span'); sp.className = 'w'; sp.style.setProperty('--wi', n++); sp.textContent = p; f.appendChild(sp);
-          });
-          c.parentNode.replaceChild(f, c);
-        } else if (c.nodeType === 1) walk(c);
-      });
-    })(el);
-  });
+  /* ---------------- появление: один короткий fade ---------------- */
   var revealIO = new IntersectionObserver(function (es) {
     es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('is-in'); revealIO.unobserve(e.target); } });
-  }, { rootMargin: '0px 0px -8% 0px', threshold: 0.12 });
-  $$('.rv, [data-split]').forEach(function (el) { revealIO.observe(el); });
+  }, { rootMargin: '0px 0px -4% 0px', threshold: 0.06 });
+  $$('.rv').forEach(function (el) { revealIO.observe(el); });
   root.classList.add('rv-ready');
 
-  /* ---------------- видео: играет только то, что на экране ---------------- */
-  var vidIO = new IntersectionObserver(function (es) {
-    es.forEach(function (e) {
-      var v = e.target;
-      if (e.isIntersecting && !(reduce && v !== introV)) { if (v.paused) tryPlay(v); }
-      else if (!v.paused) v.pause();
-    });
-  }, { threshold: 0.25 });
-  $$('main video').forEach(function (v) { v.muted = true; vidIO.observe(v); });
-
-  /* ---------------- счётчики ---------------- */
-  var countIO = new IntersectionObserver(function (es) {
-    es.forEach(function (e) {
-      if (!e.isIntersecting) return;
-      countIO.unobserve(e.target);
-      var el = e.target, to = +el.dataset.count, suffix = el.textContent.replace(/[0-9]/g, ''), t0 = performance.now();
-      if (reduce || isA11y()) return;
-      (function tick(now) {
-        var p = Math.min(1, (now - t0) / 1400), v = Math.round(to * easeOut(p));
-        el.textContent = v + suffix;
-        if (p < 1) requestAnimationFrame(tick);
-      })(t0);
-    });
-  }, { threshold: 0.6 });
-  $$('[data-count]').forEach(function (el) { countIO.observe(el); });
-
-  /* ---------------- покадровые сцены 3D-макета ---------------- */
+  /* ---------------- 3D-макет: кадры меняются, пока блок проходит через экран ---------------- */
   var seqs = [];
   $$('[data-seq]').forEach(function (el) {
     var n = +el.dataset.frames, path = el.dataset.path, ext = el.dataset.ext;
-    var canvas = $('canvas', el), ctx = canvas.getContext('2d'), frame = $('.seq__frame', el), prog = $('.seq__progress', el);
+    var canvas = $('canvas', el), ctx = canvas.getContext('2d');
     var imgs = new Array(n), drawn = -1, loading = false, dpr = 1, W = 0, H = 0;
     var order = (function () {
       var o = [], seen = {}, add = function (i) { if (i >= 0 && i < n && !seen[i]) { seen[i] = 1; o.push(i); } };
@@ -204,7 +202,7 @@
     var src = function (i) { return path + '/f_' + String(i).padStart(3, '0') + '.' + ext; };
     function size() {
       dpr = Math.min(window.devicePixelRatio || 1, 2);
-      W = Math.round(frame.clientWidth * dpr); H = Math.round(frame.clientHeight * dpr);
+      W = Math.round(el.clientWidth * dpr); H = Math.round(el.clientHeight * dpr);
       if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; drawn = -1; }
     }
     function nearest(i) {
@@ -217,7 +215,7 @@
     }
     function draw(i) {
       var j = nearest(i);
-      if (j < 0 || j === drawn) return;
+      if (j < 0 || j === drawn || !W) return;
       var im = imgs[j].im, iw = im.naturalWidth, ih = im.naturalHeight;
       var s = Math.max(W / iw, H / ih), dw = iw * s, dh = ih * s;
       ctx.clearRect(0, 0, W, H);
@@ -239,61 +237,21 @@
       };
       for (var c = 0; c < 4; c++) next();
     }
-    var st = { el: el, cur: 0, n: n, prog: prog, draw: draw, size: size, load: load };
+    var st = { el: el, cur: 0, n: n, draw: draw, size: size, load: load };
     seqs.push(st);
-    new IntersectionObserver(function (es) { if (es[0].isIntersecting && !reduce && !isA11y()) { size(); load(); } }, { rootMargin: '120% 0px' }).observe(el);
+    new IntersectionObserver(function (es) { if (es[0].isIntersecting && !still()) { size(); load(); } }, { rootMargin: '100% 0px' }).observe(el);
   });
   function updSeqs() {
-    if (reduce || isA11y()) return;
+    if (still()) return;
     var vh = innerHeight;
     seqs.forEach(function (q) {
       var r = q.el.getBoundingClientRect();
-      if (r.bottom < -vh || r.top > vh * 2) return;
-      var p = clamp01(-r.top / Math.max(1, r.height - vh));
+      if (r.bottom < -100 || r.top > vh + 100) return;
+      var p = clamp01(((vh - r.top) / (vh + r.height) - 0.12) / 0.76);
       var i = Math.round(p * (q.n - 1));
-      if (q.prog) q.prog.style.setProperty('--p', p.toFixed(3));
       q.cur = i; q.draw(i);
     });
   }
-
-  /* ---------------- солнце по дуге: от акта к акту ---------------- */
-  var arcs = $$('[data-arc]').map(function (el, i, all) {
-    var end = parseFloat(el.dataset.arc), night = !!el.closest('.seq--night');
-    var start = night ? 0.04 : (i > 0 ? parseFloat(all[i - 1].dataset.arc) : 0.02);
-    if (night) end = 0.36;
-    if (start > end) start = end - 0.2;
-    return { el: el, start: start, end: end };
-  });
-  function updArcs() {
-    var vh = innerHeight;
-    arcs.forEach(function (a) {
-      var r = a.el.getBoundingClientRect();
-      if (r.bottom < -200 || r.top > vh + 200) return;
-      var p = reduce ? 1 : clamp01((vh - r.top) / (vh * 0.75));
-      var pos = a.start + (a.end - a.start) * p;
-      a.el.style.setProperty('--a', (-90 + 180 * pos).toFixed(2) + 'deg');
-    });
-  }
-
-  /* ---------------- подводки: время дня «доходит» от предыдущей подводки до своей ---------------- */
-  var toMin = function (t) { var m = /^(\d{1,2}):(\d{2})$/.exec(t || ''); return m ? (+m[1]) * 60 + (+m[2]) : 0; };
-  var fmtT = function (m) { m = Math.round(m); return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
-  var clocks = $$('.li__t[data-time]');
-  var clockIO = new IntersectionObserver(function (es) {
-    es.forEach(function (en) {
-      if (!en.isIntersecting) return;
-      clockIO.unobserve(en.target);
-      var el = en.target, i = clocks.indexOf(el), to = toMin(el.dataset.time);
-      var from = i > 0 ? toMin(clocks[i - 1].dataset.time) : to - 30, t0 = performance.now();
-      if (reduce || isA11y() || from >= to) return;
-      (function tick(now) {
-        var p = Math.min(1, (now - t0) / 1100);
-        el.textContent = fmtT(from + (to - from) * easeOut(p));
-        if (p < 1) requestAnimationFrame(tick); else el.textContent = el.dataset.time;
-      })(t0);
-    });
-  }, { threshold: 0.6 });
-  clocks.forEach(function (el) { clockIO.observe(el); });
 
   /* ---------------- трансфер: автобус едет по маршруту ---------------- */
   var route = $('[data-route]'), rPath = route && $('.route__line', route), rDone = route && $('.route__done', route), rBus = route && $('.route__bus', route), rSvg = route && $('svg', route);
@@ -303,83 +261,54 @@
     if (!rPath) return;
     var r = route.getBoundingClientRect(), vh = innerHeight;
     if (r.bottom < -100 || r.top > vh + 100) return;
-    var p = reduce ? 1 : clamp01((vh * 0.92 - r.top) / (vh * 0.62));
+    var p = still() ? 1 : clamp01((vh * 0.95 - r.top) / (vh * 0.55));
     rDone.style.strokeDashoffset = (1 - p).toFixed(4);
     var sr = rSvg.getBoundingClientRect(), sx = sr.width / 1000, sy = sr.height / 160;
-    if (stopW !== sr.width) {  /* автобус останавливается перед остановкой «Ай Про», не наезжая на неё */
+    if (stopW !== sr.width) {  /* автобус останавливается перед школой, не наезжая на неё */
       stopW = sr.width; stopLen = rLen;
       var end = rPath.getPointAtLength(rLen);
-      for (var k = rLen; k > 0; k -= rLen / 240) { var q = rPath.getPointAtLength(k); if (Math.hypot((end.x - q.x) * sx, (end.y - q.y) * sy) >= 62) { stopLen = k; break; } }
+      for (var k = rLen; k > 0; k -= rLen / 240) { var q = rPath.getPointAtLength(k); if (Math.hypot((end.x - q.x) * sx, (end.y - q.y) * sy) >= 46) { stopLen = k; break; } }
     }
     var pt = rPath.getPointAtLength(stopLen * p), pt2 = rPath.getPointAtLength(Math.min(rLen, stopLen * p + 2));
     var x = (sr.left - r.left) + pt.x * sx, y = (sr.top - r.top) + pt.y * sy;
     var ang = Math.atan2((pt2.y - pt.y) * sy, (pt2.x - pt.x) * sx) * 180 / Math.PI;
     rBus.style.setProperty('--bx', x.toFixed(1) + 'px');
     rBus.style.setProperty('--by', y.toFixed(1) + 'px');
-    rBus.style.setProperty('--br', Math.max(-25, Math.min(25, ang)).toFixed(1) + 'deg');
+    rBus.style.setProperty('--br', Math.max(-20, Math.min(20, ang)).toFixed(1) + 'deg');
   }
 
-  /* ---------------- параллакс (только компьютер) и прогресс ---------------- */
-  var par = fine ? $$('[data-par]') : [];
-  var ticking = false;
-  var introSec = $('.drw > .intro'), sheetEl = $('.drw > .drw__sheet');
-  function updDrawer(vh) {
-    if (!introSec) return;
-    var p = clamp01(scrollY / vh);
-    introSec.style.setProperty('--dp', reduce ? 0 : p.toFixed(3));
-    if (sheetEl) sheetEl.style.setProperty('--sh', Math.min(1, scrollY / 60).toFixed(2));
-    if (introV) {
-      if (p > 0.97) { if (!introV.paused) { introV.pause(); introV._covered = true; } }
-      else if (introV._covered && introV.paused) { introV._covered = false; tryPlay(introV); }
-    }
-  }
-  function frame() {
-    ticking = false;
-    var vh = innerHeight, max = root.scrollHeight - vh;
-    updDrawer(vh);
-    if (bar) bar.style.transform = 'scaleX(' + (max > 0 ? Math.min(1, scrollY / max) : 0).toFixed(4) + ')';
-    updSeqs(); updArcs(); updRoute();
-    if (reduce || isA11y()) return;
-    par.forEach(function (el) {
-      var r = el.parentElement.getBoundingClientRect();
-      if (r.bottom < -300 || r.top > vh + 300) return;
-      el.style.translate = '0 ' + ((r.top + r.height / 2 - vh / 2) * (parseFloat(el.dataset.par) || 0)).toFixed(1) + 'px';
-    });
-  }
-  addEventListener('scroll', function () { if (!ticking) { ticking = true; requestAnimationFrame(frame); } }, { passive: true });
   addEventListener('resize', function () { seqs.forEach(function (q) { q.size(); q.draw(q.cur); }); frame(); });
   frame();
 
-  /* ---------------- окна: меню, программы, сведения, помощник ---------------- */
-  var openStack = [];
-  function anyOpen() { return $('dialog[open]'); }
+  /* ---------------- окна: меню, программы, сведения, альбом, помощник ---------------- */
   function openD(id) {
     var dl = d.getElementById(id);
     if (!dl || dl.tagName !== 'DIALOG') return;
-    if (id !== 'lightbox') $$('dialog[open]').forEach(function (x) { if (x !== dl) closeD(x, true); });
+    if (id !== 'lightbox') $$('dialog[open]').forEach(function (x) { if (x !== dl) closeD(x); });
     if (!dl.open) { if (dl.showModal) dl.showModal(); else dl.setAttribute('open', ''); }
     if (dl.classList.contains('pm')) { dl.scrollTop = 0; try { history.replaceState(null, '', '#' + id); } catch (e) {} }
     root.classList.add('modal-open');
-    if (id === 'menu') chapBtn.setAttribute('aria-expanded', 'true');
-    $$('video', dl).forEach(function (v) { v.muted = true; tryPlay(v); });
+    if (id === 'menu' && menuBtn) menuBtn.setAttribute('aria-expanded', 'true');
+    updBar();
   }
-  function closeD(dl, keepHash) {
+  function closeD(dl) {
     if (!dl) return;
     if (dl.close) dl.close(); else { dl.removeAttribute('open'); dl.dispatchEvent(new Event('close')); }
   }
   $$('dialog').forEach(function (dl) {
     dl.addEventListener('close', function () {
       $$('video', dl).forEach(function (v) { v.pause(); });
-      if (dl.id === 'menu') chapBtn.setAttribute('aria-expanded', 'false');
+      if (dl.id === 'menu' && menuBtn) menuBtn.setAttribute('aria-expanded', 'false');
       if (dl.id === 'lightbox') $('#lbStage').innerHTML = '';
       if (!anyOpen()) {
         root.classList.remove('modal-open');
         if (/^#(m-|docs)/.test(location.hash)) { try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {} }
       }
+      updBar();
     });
     dl.addEventListener('click', function (e) { if (e.target === dl) closeD(dl); });
   });
-  chapBtn.addEventListener('click', function () { openD('menu'); });
+  if (menuBtn) menuBtn.addEventListener('click', function () { openD('menu'); });
   d.addEventListener('click', function (e) {
     var t = e.target.closest('[data-open],[data-close],[data-close-go],[data-go],[data-jump],[data-album]');
     if (!t) return;
@@ -413,7 +342,7 @@
   openFromHash();
   addEventListener('hashchange', openFromHash);
 
-  /* ---------------- альбомы: разделы галереи и направления кружков ---------------- */
+  /* ---------------- альбомы галереи и просмотр ---------------- */
   var escH = function (v) { return String(v == null ? '' : v).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
   var ALB = {}, albKey = null, lbIndex = 0, lbList = [];
   try { ALB = JSON.parse($('#albumData').textContent); } catch (e) {}
@@ -422,13 +351,12 @@
     var a = ALB[k]; if (!a) return false;
     albKey = k;
     $('#albumT').textContent = a.t;
-    var sub = $('#albumSub'); sub.textContent = a.sub || ''; sub.hidden = !a.sub;
-    $('#albumTabs').innerHTML = Object.keys(ALB).filter(function (x) { return ALB[x].g === a.g; }).map(function (x) {
+    $('#albumTabs').innerHTML = Object.keys(ALB).map(function (x) {
       var on = x === k;
       return '<button type="button" data-album-tab="' + x + '" aria-pressed="' + on + '"' + (on ? ' class="is-on"' : '') + '>' + escH(ALB[x].t) + '<small>' + ALB[x].items.length + '</small></button>';
     }).join('');
     $('#albumGrid').innerHTML = a.items.map(function (it, i) {
-      return '<button type="button" class="album__it" data-i="' + i + '" aria-label="' + escH(it.alt) + '"><img src="' + escH(it.th) + '" alt="" loading="lazy">' + (it.k === 'v' ? '<span class="album__play">' + playIco + '</span>' : '') + '</button>';
+      return '<button type="button" class="album__it" data-i="' + i + '" aria-label="' + escH(it.alt) + (it.k === 'v' ? ' (видео)' : '') + '"><img src="' + escH(it.th) + '" alt="" loading="lazy">' + (it.k === 'v' ? '<span class="album__play">' + playIco + '</span>' : '') + '</button>';
     }).join('');
     $('#album').scrollTop = 0;
     showTab();
@@ -456,14 +384,15 @@
     var m;
     if (it.k === 'v') {
       m = d.createElement('video');
-      m.src = it.full; m.poster = it.th; m.controls = true; m.playsInline = true; m.loop = true; m.autoplay = true; m.muted = true;
+      m.src = it.full; m.poster = it.th; m.controls = true; m.playsInline = true; m.loop = true; m.muted = true;
+      if (!still()) m.autoplay = true;
       m.setAttribute('aria-label', it.alt);
     } else {
       m = d.createElement('img'); m.src = it.full; m.alt = it.alt;
     }
     stage.appendChild(m);
     $('#lbCap').textContent = it.alt + '  ·  ' + (lbIndex + 1) + ' из ' + lbList.length;
-    if (m.tagName === 'VIDEO') tryPlay(m);
+    if (m.tagName === 'VIDEO' && !still()) tryPlay(m);
   }
   $$('[data-lb]').forEach(function (b) { b.addEventListener('click', function () { lbShow(lbIndex + (+b.dataset.lb)); }); });
   addEventListener('keydown', function (e) {
@@ -472,8 +401,7 @@
     if (e.key === 'ArrowRight') lbShow(lbIndex + 1);
     if (e.key === 'ArrowLeft') lbShow(lbIndex - 1);
   });
-  /* свайп в лайтбоксе на телефоне */
-  (function () {
+  (function () {  /* свайп в просмотре на телефоне */
     var lb = $('#lightbox'); if (!lb) return;
     var x0 = null, y0 = 0;
     lb.addEventListener('touchstart', function (e) { var t = e.touches[0]; x0 = t.clientX; y0 = t.clientY; }, { passive: true });
@@ -484,12 +412,15 @@
     }, { passive: true });
   })();
 
-  /* ---------------- отзывы: листание ---------------- */
+  /* ---------------- отзывы: листание кнопками ---------------- */
   $$('.carousel').forEach(function (c) {
-    var tr = $('.carousel__track', c);
+    var tr = $('.carousel__track', c), nav = $('.carousel__nav', c);
+    /* стрелки нужны, только если отзывы не помещаются */
+    var fit = function () { if (nav) nav.hidden = tr.scrollWidth <= tr.clientWidth + 2; };
+    fit(); addEventListener('resize', fit);
     $$('.carousel__nav button', c).forEach(function (b) {
       b.addEventListener('click', function () {
-        var card = tr.firstElementChild, step = card ? card.getBoundingClientRect().width + 16 : 300;
+        var card = tr.firstElementChild, step = card ? card.getBoundingClientRect().width + 12 : 300;
         tr.scrollBy({ left: step * (+b.dataset.dir), behavior: reduce ? 'auto' : 'smooth' });
       });
     });
@@ -514,11 +445,12 @@
       if (!items.length) { sec.hidden = true; return; }
       items.sort(function (a, b) { return (b.pin ? 1 : 0) - (a.pin ? 1 : 0) || String(b.date || '').localeCompare(String(a.date || '')); });
       list.innerHTML = items.map(function (n) {
-        return '<article class="news__card is-in' + (n.pin ? ' is-pin' : '') + '">' +
+        var meta = (n.tag ? '<span class="ncard__tag">' + esc(n.tag) + '</span>' : '') + (n.date ? '<time datetime="' + esc(n.date) + '">' + esc(fmtDate(n.date)) + '</time>' : '');
+        return '<article class="ncard is-in' + (n.pin ? ' is-pin' : '') + '">' +
           (n.image ? '<img src="' + esc(n.image) + '" alt="" loading="lazy">' : '') +
-          '<div class="news__meta">' + (n.tag ? '<span class="news__tag">' + esc(n.tag) + '</span>' : '') + (n.date ? '<time datetime="' + esc(n.date) + '">' + esc(fmtDate(n.date)) + '</time>' : '') + '</div>' +
-          '<h3>' + esc(n.title) + '</h3><p>' + esc(n.text) + '</p>' +
-          (n.link ? '<a class="news__more" href="' + esc(n.link) + '"' + (/^https?:/.test(n.link) ? ' target="_blank" rel="noopener"' : '') + '>' + esc(n.link_text || 'Подробнее') + arrow + '</a>' : '') +
+          (meta ? '<p class="ncard__meta">' + meta + '</p>' : '') +
+          '<h3 class="ncard__t">' + esc(n.title) + '</h3><p class="ncard__x">' + esc(n.text) + '</p>' +
+          (n.link ? '<a class="lnk" href="' + esc(n.link) + '"' + (/^https?:/.test(n.link) ? ' target="_blank" rel="noopener"' : '') + '>' + esc(n.link_text || 'Подробнее') + arrow + '</a>' : '') +
           '</article>';
       }).join('');
     }
@@ -572,7 +504,7 @@
       bub(item.q, true);
       var dots = d.createElement('p'); dots.className = 'bub bub--dots'; dots.setAttribute('aria-label', 'Помощник печатает'); dots.innerHTML = '<i></i><i></i><i></i>';
       log.appendChild(dots); log.scrollTop = log.scrollHeight;
-      setTimeout(function () { dots.remove(); item.a.forEach(function (a) { bub(a); }); }, reduce ? 0 : 650);
+      setTimeout(function () { dots.remove(); item.a.forEach(function (a) { bub(a); }); }, reduce ? 0 : 500);
     });
   })();
 
@@ -587,7 +519,9 @@
       root.classList.toggle('a11y', on);
       try { localStorage.setItem('ipro-a11y', on ? '1' : '0'); } catch (e) {}
       syncA11y();
-      if (!on) { seqs.forEach(function (q) { q.size(); q.load(); }); frame(); }
+      if (on) $$('main video').forEach(function (v) { v.pause(); });
+      else { seqs.forEach(function (q) { q.size(); q.load(); }); }
+      frame();
     });
   });
   syncA11y();
