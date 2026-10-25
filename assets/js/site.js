@@ -1,30 +1,41 @@
 /* =====================================================================
-   Ай Про · IPROSCHOOL — сценарий сайта
-   Версия A: день в Ай Про — подводки к блокам по часам,
-   палитры глав смешиваются кадр за кадром, покадровые сцены 3D-макета, автобус по маршруту,
-   окна программ, галерея, форма записи, новости, помощник.
+   Ай Про · IPROSCHOOL — сценарий сайта, версия A «День под солнцем»
+   Всё листается только вниз. Солнце из логотипа раскрывается в видео, камера подлетает к особняку,
+   главы дня отмечены часами (солнце идёт по дуге, часы «доходят» до своего времени),
+   карточки программ ложатся стопкой, автобус едет по маршруту, ночью камера отъезжает от особняка.
+   Плюс окна программ, меню, сведения, альбомы, форма записи, новости, помощник, версия для слабовидящих.
    ===================================================================== */
 (function () {
   'use strict';
   var d = document, root = d.documentElement;
   var reduceMQ = matchMedia('(prefers-reduced-motion: reduce)');
   var reduce = reduceMQ.matches;
-  if (reduceMQ.addEventListener) reduceMQ.addEventListener('change', function (e) { reduce = e.matches; });
-  var fine = matchMedia('(hover: hover) and (pointer: fine)').matches;
   var $ = function (s, c) { return (c || d).querySelector(s); };
   var $$ = function (s, c) { return [].slice.call((c || d).querySelectorAll(s)); };
-  var clamp01 = function (v) { return Math.max(0, Math.min(1, v)); };
+  var clamp = function (v, a, b) { return Math.max(a, Math.min(b, v)); };
+  var lerp = function (a, b, t) { return a + (b - a) * t; };
+  var ease = function (t) { return t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; };
+  var easeOut = function (t) { return 1 - (1 - t) * (1 - t); };
+  var seg = function (p, a, b) { return clamp((p - a) / (b - a), 0, 1); };
   var isA11y = function () { return root.classList.contains('a11y'); };
+  var still = function () { return reduce || isA11y(); };  /* без движения: настройка системы или версия для слабовидящих */
   var tryPlay = function (v) { var p = v.play(); if (p && p.catch) p.catch(function () {}); };
+  var hasIO = 'IntersectionObserver' in window;
+  function watch(els, opts, cb) {
+    if (!hasIO) { els.forEach(function (el) { cb(el, true, null); }); return null; }
+    var o = new IntersectionObserver(function (es) { es.forEach(function (e) { cb(e.target, e.isIntersecting, o); }); }, opts);
+    els.forEach(function (el) { o.observe(el); });
+    return o;
+  }
+  var vw = innerWidth, vh = innerHeight, wide = vw >= 900;
 
-  /* ---------------- первый экран: горизонтальное видео или вертикальное на телефоне ---------------- */
+  /* ---------------- первый экран: вертикальное видео на телефоне, горизонтальное на компьютере ---------------- */
   var introV = $('.intro__v');
   (function () {
     if (!introV) return;
     var mq = matchMedia('(orientation: portrait) and (max-width: 820px)');
     var pick = function () {
-      var port = mq.matches;
-      var src = port ? introV.dataset.srcPort : introV.dataset.srcLand;
+      var port = mq.matches, src = port ? introV.dataset.srcPort : introV.dataset.srcLand;
       if (introV.getAttribute('src') === src) return;
       introV.setAttribute('poster', port ? introV.dataset.posterPort : introV.dataset.posterLand);
       introV.src = src; introV.muted = true; tryPlay(introV);
@@ -33,111 +44,44 @@
     if (mq.addEventListener) mq.addEventListener('change', pick);
   })();
 
-  /* ---------------- главы, палитры, капсула, точки ---------------- */
-  var scenes = $$('main .sc');
+  /* ---------------- главы: название в шапке, пункт меню, цвет полосы браузера ---------------- */
+  var scenes = $$('main > .sc'), hd = $('#hd'), chapName = $('#chapName'), menuBtn = $('#menuBtn'), ask = $('.ask');
   var themeMeta = $('meta[name="theme-color"]');
-  var chapNum = $('#chapNum'), chapName = $('#chapName'), chapBtn = $('#menuBtn'), bar = $('.dock__bar');
-  var KEYS = ['bg', 'fg', 'muted', 'accent', 'aura', 'band', 'card', 'line'];
-  var AURA = [[74, 46], [22, 30], [72, 40], [28, 62], [76, 56], [24, 34], [62, 30], [40, 64], [72, 44], [30, 50]];
-  scenes.forEach(function (s, i) {
-    var a = AURA[i % AURA.length];
-    s.style.setProperty('--ax', a[0] + '%'); s.style.setProperty('--ay', a[1] + '%'); s.style.setProperty('--ry', Math.min(a[1], 100 - a[1]) + '%');
-  });
-
-  var parse = function (v) {
-    var m = v.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
-    if (m) { var h = m[1]; if (h.length === 3) h = h.replace(/./g, function (c) { return c + c; }); return [0, 2, 4].map(function (j) { return parseInt(h.slice(j, j + 2), 16); }).concat(1); }
-    m = v.match(/^rgba?\(([^)]+)\)$/i);
-    if (m) { var p = m[1].split(/[\s,\/]+/).filter(Boolean).map(parseFloat); if (p.length >= 3) return [p[0], p[1], p[2], p.length > 3 ? p[3] : 1]; }
-    return null;
-  };
-  var fmt = function (c) { return 'rgba(' + Math.round(c[0]) + ',' + Math.round(c[1]) + ',' + Math.round(c[2]) + ',' + (+c[3].toFixed(3)) + ')'; };
-  var FADE = 1400, FADE_AURA = 1900, pal = null, palRaf = 0;
-  var easeOut = function (t) { return 1 - (1 - t) * (1 - t); };
-  function fadeTo(s, instant) {
-    var cs = getComputedStyle(s), raw = {}, to = {};
-    KEYS.forEach(function (k) { raw[k] = cs.getPropertyValue('--s-' + k).trim(); to[k] = parse(raw[k]); });
-    cancelAnimationFrame(palRaf);
-    var ok = KEYS.every(function (k) { return to[k]; });
-    if (!pal || reduce || instant || !ok) {
-      KEYS.forEach(function (k) { if (raw[k]) root.style.setProperty('--' + k, raw[k]); });
-      if (themeMeta && raw.bg) themeMeta.setAttribute('content', raw.bg);
-      pal = ok ? KEYS.reduce(function (o, k) { o[k] = to[k].slice(); return o; }, {}) : null;
-      return;
-    }
-    var from = KEYS.reduce(function (o, k) { o[k] = pal[k].slice(); return o; }, {}), t0 = performance.now();
-    var step = function (now) {
-      var done = true;
-      KEYS.forEach(function (k) {
-        var p = Math.min(1, Math.max(0, now - t0) / (k === 'aura' ? FADE_AURA : FADE));
-        if (p < 1) done = false;
-        var e = easeOut(p);
-        pal[k] = from[k].map(function (a, j) { return a + (to[k][j] - a) * e; });
-        root.style.setProperty('--' + k, fmt(pal[k]));
-      });
-      if (themeMeta) themeMeta.setAttribute('content', fmt(pal.bg));
-      if (!done) palRaf = requestAnimationFrame(step);
-    };
-    palRaf = requestAnimationFrame(step);
-  }
-
-  var MENU_OF = { news: 'news', concept: 'concept', about: 'concept', programs: 'programs', food: 'food', teachers: 'teachers', safety: 'safety', extra: 'extra', transfer: 'transfer', summer: 'summer', reviews: 'reviews', gallery: 'gallery' };
-  var nav = $('.dots');
-  var dots = scenes.map(function (s, i) {
-    var b = d.createElement('button');
-    b.type = 'button';
-    if (s.classList.contains('act')) b.className = 'is-act';
-    b.setAttribute('aria-label', (s.dataset.num ? s.dataset.num + ' · ' : '') + s.dataset.title);
-    var sp = d.createElement('span'); sp.textContent = s.dataset.title; b.appendChild(sp);
-    b.addEventListener('click', function () { go(s); });
-    nav.appendChild(b);
-    return b;
-  });
+  var MENU_OF = { concept: 'concept', about: 'concept', programs: 'programs', food: 'food', teachers: 'teachers', safety: 'safety', extra: 'extra', transfer: 'transfer', summer: 'summer', reviews: 'reviews', news: 'news', gallery: 'gallery' };
   var active = -1;
-  var narrowMQ = matchMedia('(max-width: 560px)');
   function setActive(i) {
     if (i < 0 || i === active) return;
     active = i;
     var s = scenes[i];
-    fadeTo(s);
-    chapNum.textContent = s.dataset.num || '';
-    chapName.textContent = (narrowMQ.matches && s.dataset.short) || s.dataset.title || '';
-    if (!reduce) { chapBtn.classList.remove('swap'); void chapBtn.offsetWidth; chapBtn.classList.add('swap'); }
-    dots.forEach(function (b, j) { b.setAttribute('aria-current', j === i ? 'true' : 'false'); });
+    if (chapName) chapName.textContent = s.id === 'top' ? '' : (s.dataset.title || '');
     var m = MENU_OF[s.id];
     $$('.menu a[data-go]').forEach(function (a) { a.setAttribute('aria-current', a.dataset.go === m ? 'true' : 'false'); });
-    var ask = $('.ask');
-    if (ask) ask.classList.toggle('is-hidden', s.id === 'signup');
+    if (themeMeta) themeMeta.setAttribute('content', s.style.getPropertyValue('--s1').trim() || '#0A2C55');
+    if (ask) ask.classList.toggle('is-hidden', s.id === 'top' || s.id === 'act-night' || s.id === 'signup');
   }
-  /* активная глава — последняя (по порядку) из тех, что пересекают середину экрана:
-     видео в начале «прилипает» и пересекает её всегда, поэтому одного события «вошла» мало */
+  /* активная глава — последняя (по порядку) из тех, что пересекают середину экрана */
   var crossing = [];
-  var sceneIO = new IntersectionObserver(function (es) {
-    es.forEach(function (e) {
-      var k = crossing.indexOf(e.target);
-      if (e.isIntersecting && k < 0) crossing.push(e.target);
-      if (!e.isIntersecting && k >= 0) crossing.splice(k, 1);
-    });
-    var idx = -1;
-    scenes.forEach(function (s, i) { if (crossing.indexOf(s) >= 0) idx = i; });
-    if (idx >= 0) setActive(idx);
-  }, { rootMargin: '-50% 0px -49% 0px' });
-  scenes.forEach(function (s) { sceneIO.observe(s); });
-  fadeTo(scenes[0], true);
+  if (hasIO) {
+    var sceneIO = new IntersectionObserver(function (es) {
+      es.forEach(function (e) {
+        var k = crossing.indexOf(e.target);
+        if (e.isIntersecting && k < 0) crossing.push(e.target);
+        if (!e.isIntersecting && k >= 0) crossing.splice(k, 1);
+      });
+      var idx = -1;
+      scenes.forEach(function (s, i) { if (crossing.indexOf(s) >= 0) idx = i; });
+      setActive(idx);
+    }, { rootMargin: '-50% 0px -49% 0px' });
+    scenes.forEach(function (s) { sceneIO.observe(s); });
+  }
   setActive(0);
 
   function go(target) {
     var el = typeof target === 'string' ? d.getElementById(target) : target;
     if (!el) return;
-    el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+    if (el.id === 'top') { scrollTo({ top: 0, behavior: still() ? 'auto' : 'smooth' }); return; }
+    el.scrollIntoView({ behavior: still() ? 'auto' : 'smooth', block: 'start' });
   }
-  addEventListener('keydown', function (e) {
-    if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || $('dialog[open]')) return;
-    var t = e.target;
-    if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
-    if (e.key === 'ArrowRight') { e.preventDefault(); go(scenes[Math.min(scenes.length - 1, active + 1)]); }
-    else if (e.key === 'ArrowLeft') { e.preventDefault(); go(scenes[Math.max(0, active - 1)]); }
-  });
 
   /* ---------------- появление: заголовки по словам, блоки снизу ---------------- */
   $$('[data-split]').forEach(function (el) {
@@ -156,156 +100,133 @@
       });
     })(el);
   });
-  var revealIO = new IntersectionObserver(function (es) {
-    es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('is-in'); revealIO.unobserve(e.target); } });
-  }, { rootMargin: '0px 0px -8% 0px', threshold: 0.12 });
-  $$('.rv, [data-split]').forEach(function (el) { revealIO.observe(el); });
-  root.classList.add('rv-ready');
+  if (hasIO) {
+    watch($$('.rv, [data-split]'), { rootMargin: '0px 0px -8% 0px', threshold: 0.12 }, function (el, on, o) {
+      if (on) { el.classList.add('is-in'); o.unobserve(el); }
+    });
+    root.classList.add('rv-ready');
+  }
 
   /* ---------------- видео: играет только то, что на экране ---------------- */
-  var vidIO = new IntersectionObserver(function (es) {
-    es.forEach(function (e) {
-      var v = e.target;
-      if (e.isIntersecting && !(reduce && v !== introV)) { if (v.paused) tryPlay(v); }
-      else if (!v.paused) v.pause();
-    });
-  }, { threshold: 0.25 });
-  $$('main video').forEach(function (v) { v.muted = true; vidIO.observe(v); });
-
-  /* ---------------- счётчики ---------------- */
-  var countIO = new IntersectionObserver(function (es) {
-    es.forEach(function (e) {
-      if (!e.isIntersecting) return;
-      countIO.unobserve(e.target);
-      var el = e.target, to = +el.dataset.count, suffix = el.textContent.replace(/[0-9]/g, ''), t0 = performance.now();
-      if (reduce || isA11y()) return;
-      (function tick(now) {
-        var p = Math.min(1, (now - t0) / 1400), v = Math.round(to * easeOut(p));
-        el.textContent = v + suffix;
-        if (p < 1) requestAnimationFrame(tick);
-      })(t0);
-    });
-  }, { threshold: 0.6 });
-  $$('[data-count]').forEach(function (el) { countIO.observe(el); });
-
-  /* ---------------- покадровые сцены 3D-макета ---------------- */
-  var seqs = [];
-  $$('[data-seq]').forEach(function (el) {
-    var n = +el.dataset.frames, path = el.dataset.path, ext = el.dataset.ext;
-    var canvas = $('canvas', el), ctx = canvas.getContext('2d'), frame = $('.seq__frame', el), prog = $('.seq__progress', el);
-    var imgs = new Array(n), drawn = -1, loading = false, dpr = 1, W = 0, H = 0;
-    var order = (function () {
-      var o = [], seen = {}, add = function (i) { if (i >= 0 && i < n && !seen[i]) { seen[i] = 1; o.push(i); } };
-      add(0); add(n - 1);
-      for (var k = 2; k < n; k *= 2) for (var j = 1; j < k; j++) add(Math.round(j * (n - 1) / k));
-      for (var i = 0; i < n; i++) add(i);
-      return o;
-    })();
-    var src = function (i) { return path + '/f_' + String(i).padStart(3, '0') + '.' + ext; };
-    function size() {
-      dpr = Math.min(window.devicePixelRatio || 1, 2);
-      W = Math.round(frame.clientWidth * dpr); H = Math.round(frame.clientHeight * dpr);
-      if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; drawn = -1; }
-    }
-    function nearest(i) {
-      if (imgs[i] && imgs[i].ok) return i;
-      for (var k = 1; k < n; k++) {
-        if (imgs[i - k] && imgs[i - k].ok) return i - k;
-        if (imgs[i + k] && imgs[i + k].ok) return i + k;
-      }
-      return -1;
-    }
-    function draw(i) {
-      var j = nearest(i);
-      if (j < 0 || j === drawn) return;
-      var im = imgs[j].im, iw = im.naturalWidth, ih = im.naturalHeight;
-      var s = Math.max(W / iw, H / ih), dw = iw * s, dh = ih * s;
-      ctx.clearRect(0, 0, W, H);
-      ctx.drawImage(im, (W - dw) / 2, (H - dh) / 2, dw, dh);
-      drawn = j;
-      if (!el.classList.contains('is-live')) el.classList.add('is-live');
-    }
-    function load() {
-      if (loading) return; loading = true;
-      var q = order.filter(function (i) { return !imgs[i]; });
-      var next = function () {
-        if (!q.length) return;
-        var i = q.shift(), im = new Image();
-        imgs[i] = { im: im, ok: false };
-        im.decoding = 'async';
-        im.onload = function () { imgs[i].ok = true; if (st.cur === i || drawn < 0) draw(st.cur); next(); };
-        im.onerror = function () { next(); };
-        im.src = src(i);
-      };
-      for (var c = 0; c < 4; c++) next();
-    }
-    var st = { el: el, cur: 0, n: n, prog: prog, draw: draw, size: size, load: load };
-    seqs.push(st);
-    new IntersectionObserver(function (es) { if (es[0].isIntersecting && !reduce && !isA11y()) { size(); load(); } }, { rootMargin: '120% 0px' }).observe(el);
+  watch($$('main video'), { threshold: 0.25 }, function (v, on) {
+    v.muted = true;
+    if (on && !(reduce && v !== introV)) { if (v.paused) tryPlay(v); }
+    else if (!v.paused) v.pause();
   });
-  function updSeqs() {
-    if (reduce || isA11y()) return;
-    var vh = innerHeight;
-    seqs.forEach(function (q) {
-      var r = q.el.getBoundingClientRect();
-      if (r.bottom < -vh || r.top > vh * 2) return;
-      var p = clamp01(-r.top / Math.max(1, r.height - vh));
-      var i = Math.round(p * (q.n - 1));
-      if (q.prog) q.prog.style.setProperty('--p', p.toFixed(3));
-      q.cur = i; q.draw(i);
+
+  /* ---------------- цифры набегают ---------------- */
+  watch($$('[data-count]'), { threshold: 0.6 }, function (el, on, o) {
+    if (!on) return;
+    if (o) o.unobserve(el);
+    if (still()) return;
+    var to = +el.dataset.count, from = to > 1000 ? to - 25 : 0, suffix = el.textContent.replace(/[0-9]/g, ''), t0 = performance.now();
+    (function tick(now) {
+      var p = Math.min(1, (now - t0) / 1400);
+      el.textContent = Math.round(lerp(from, to, easeOut(p))) + suffix;
+      if (p < 1) requestAnimationFrame(tick);
+    })(t0);
+  });
+
+  /* ---------------- покадровые сцены 3D-макета: утро (подлёт) и ночь (отъезд) ---------------- */
+  function Seq(el, bg) {
+    this.el = el; this.c = $('canvas', el); this.ctx = this.c.getContext('2d');
+    this.n = +el.dataset.frames; this.path = el.dataset.path; this.ext = el.dataset.ext || 'webp'; this.bg = bg;
+    this.imgs = []; this.cur = 0; this.drawn = -1; this.fit = -1; this.w = 0; this.h = 0; this.dpr = 1;
+    this.offX = 0; this.offY = 0; this.box = null;
+    var n = this.n, order = [0, n - 1], seen = {};
+    for (var k = 2; k < n; k *= 2) for (var j = 1; j < k; j++) order.push(Math.round(j * (n - 1) / k));
+    for (var i = 0; i < n; i++) order.push(i);
+    this.order = order.filter(function (x) { if (seen[x]) return false; seen[x] = 1; return true; });
+  }
+  Seq.prototype.start = function () {
+    if (this.started) return;
+    this.started = true;
+    var self = this, q = this.order.slice();
+    var next = function () {
+      if (!q.length) return;
+      var i = q.shift(), im = new Image();
+      im.decoding = 'async';
+      im.onload = function () { self.imgs[i] = im; if (i === self.cur || self.drawn < 0) { self.drawn = -1; kick(); } next(); };
+      im.onerror = next;
+      im.src = self.path + '/f_' + String(i).padStart(3, '0') + '.' + self.ext;
+    };
+    for (var c = 0; c < 4; c++) next();
+  };
+  Seq.prototype.size = function () {
+    /* кадры 780 px в ширину: на большом экране они и так растянуты, лишние пиксели холста только тормозят */
+    var dpr = Math.min(devicePixelRatio || 1, wide ? 1.25 : 2), cw = this.c.clientWidth, ch = this.c.clientHeight;
+    var w = Math.round(cw * dpr), h = Math.round(ch * dpr);
+    this.dpr = cw ? w / cw : dpr;
+    if (w !== this.w || h !== this.h) { this.c.width = this.w = w; this.c.height = this.h = h; this.drawn = -1; }
+  };
+  Seq.prototype.nearest = function (i) {
+    if (this.imgs[i]) return i;
+    for (var k = 1; k < this.n; k++) { if (this.imgs[i - k]) return i - k; if (this.imgs[i + k]) return i + k; }
+    return -1;
+  };
+  /* fit: 0 — макет целиком (contain), 1 — на весь экран (cover); box — где лежит кадр, в пикселях страницы */
+  Seq.prototype.draw = function (i, fit) {
+    var j = this.nearest(i);
+    if (j < 0 || !this.w) return;
+    if (j === this.drawn && Math.abs(fit - this.fit) < .002 && this.offX === this._ox && this.offY === this._oy) return;
+    var im = this.imgs[j], W = this.w, H = this.h, iw = im.naturalWidth, ih = im.naturalHeight;
+    var s = lerp(Math.min(W / iw, H / ih), Math.max(W / iw, H / ih), clamp(fit, 0, 1));
+    var dw = iw * s, dh = ih * s, x = (W - dw) / 2 + this.offX * W, y = (H - dh) / 2 + this.offY * H;
+    this.ctx.fillStyle = this.bg; this.ctx.fillRect(0, 0, W, H);
+    this.ctx.drawImage(im, x, y, dw, dh);
+    this.drawn = j; this.fit = fit; this._ox = this.offX; this._oy = this.offY;
+    this.box = { x: x / this.dpr, y: y / this.dpr, s: s / this.dpr };
+    if (!this.live) { this.live = true; this.el.classList.add('is-live'); }
+  };
+  Seq.prototype.sleep = function () { this.live = false; this.drawn = -1; this.el.classList.remove('is-live'); };
+
+  var estate = $('.estate'), estatePin = estate && $('.pin', estate), sDay = estate && new Seq(estate, '#ffffff');
+  var pins = estate ? $$('.pins li', estate) : [], pinsDirty = true;
+  var night = $('.nightseq'), nightPin = night && $('.pin', night), sNight = night && new Seq(night, '#0A121C');
+  var seqs = [sDay, sNight].filter(Boolean);
+  watch(seqs.map(function (s) { return s.el; }), { rootMargin: '150% 0px' }, function (el, on) {
+    if (!on || still()) return;
+    var s = el === estate ? sDay : sNight;
+    s.size(); s.start(); kick();
+  });
+
+  /* метки на особняке: точка привязана к месту на макете, подпись — в сторону от края экрана */
+  function measurePins() {
+    pins.forEach(function (li) { li._w = li.offsetWidth; li._h = li.offsetHeight; });
+    pinsDirty = false;
+  }
+  function placePins(box, pe, all) {
+    pins.forEach(function (li, idx) {
+      li.classList.toggle('on', all || (pe > .02 + idx * .05 && pe < .3));
+      if (!box || !li._w) return;
+      var x = box.x + (+li.dataset.x) * box.s, y = box.y + (+li.dataset.y) * box.s, left = x > vw / 2;
+      li.classList.toggle('l', left);
+      li.style.left = (left ? x - li._w + 7 : x - 7).toFixed(1) + 'px';
+      li.style.top = (y - li._h / 2).toFixed(1) + 'px';
     });
   }
 
-  /* ---------------- солнце по дуге: от акта к акту ---------------- */
-  var arcs = $$('[data-arc]').map(function (el, i, all) {
-    var end = parseFloat(el.dataset.arc), night = !!el.closest('.seq--night');
-    var start = night ? 0.04 : (i > 0 ? parseFloat(all[i - 1].dataset.arc) : 0.02);
-    if (night) end = 0.36;
-    if (start > end) start = end - 0.2;
-    return { el: el, start: start, end: end };
-  });
-  function updArcs() {
-    var vh = innerHeight;
-    arcs.forEach(function (a) {
-      var r = a.el.getBoundingClientRect();
-      if (r.bottom < -200 || r.top > vh + 200) return;
-      var p = reduce ? 1 : clamp01((vh - r.top) / (vh * 0.75));
-      var pos = a.start + (a.end - a.start) * p;
-      a.el.style.setProperty('--a', (-90 + 180 * pos).toFixed(2) + 'deg');
-    });
-  }
-
-  /* ---------------- подводки: время дня «доходит» от предыдущей подводки до своей ---------------- */
+  /* ---------------- время дня: солнце по дуге, часы «доходят» от предыдущей главы ---------------- */
   var toMin = function (t) { var m = /^(\d{1,2}):(\d{2})$/.exec(t || ''); return m ? (+m[1]) * 60 + (+m[2]) : 0; };
   var fmtT = function (m) { m = Math.round(m); return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
-  var clocks = $$('.li__t[data-time]');
-  var clockIO = new IntersectionObserver(function (es) {
-    es.forEach(function (en) {
-      if (!en.isIntersecting) return;
-      clockIO.unobserve(en.target);
-      var el = en.target, i = clocks.indexOf(el), to = toMin(el.dataset.time);
-      var from = i > 0 ? toMin(clocks[i - 1].dataset.time) : to - 30, t0 = performance.now();
-      if (reduce || isA11y() || from >= to) return;
-      (function tick(now) {
-        var p = Math.min(1, (now - t0) / 1100);
-        el.textContent = fmtT(from + (to - from) * easeOut(p));
-        if (p < 1) requestAnimationFrame(tick); else el.textContent = el.dataset.time;
-      })(t0);
-    });
-  }, { threshold: 0.6 });
-  clocks.forEach(function (el) { clockIO.observe(el); });
+  var bez = function (t) { var u = 1 - t; return [u * u * .01 + 2 * u * t * .5 + t * t * .99, u * u * .9667 - 2 * u * t * .4667 + t * t * .9667]; };
+  var heads = $$('.th').map(function (el, i, all) {
+    var clock = $('.th__clock', el), prev = i > 0 ? all[i - 1] : null;
+    var a1 = parseFloat(el.dataset.arc) || .5, a0 = prev ? parseFloat(prev.dataset.arc) : Math.max(.02, a1 - .16);
+    var t1 = toMin(clock.dataset.time), t0 = prev ? toMin($('.th__clock', prev).dataset.time) : t1 - 30;
+    return { el: el, sun: $('.th__sun', el), clock: clock, a0: a0, a1: a1, t0: t0, t1: t1, last: -1 };
+  });
 
   /* ---------------- трансфер: автобус едет по маршруту ---------------- */
-  var route = $('[data-route]'), rPath = route && $('.route__line', route), rDone = route && $('.route__done', route), rBus = route && $('.route__bus', route), rSvg = route && $('svg', route);
-  var rLen = 0, stopW = -1, stopLen = 0;
-  if (rPath) { rLen = rPath.getTotalLength(); rDone.setAttribute('pathLength', '1'); rDone.style.strokeDasharray = '1 1'; }
-  function updRoute() {
-    if (!rPath) return;
-    var r = route.getBoundingClientRect(), vh = innerHeight;
-    if (r.bottom < -100 || r.top > vh + 100) return;
-    var p = reduce ? 1 : clamp01((vh * 0.92 - r.top) / (vh * 0.62));
+  var route = $('[data-route]'), rPath, rDone, rBus, rSvg, rLen = 0, stopW = -1, stopLen = 0;
+  if (route) {
+    rPath = $('.route__line', route); rDone = $('.route__done', route); rBus = $('.route__bus', route); rSvg = $('svg', route);
+    rLen = rPath.getTotalLength(); rDone.setAttribute('pathLength', '1'); rDone.style.strokeDasharray = '1 1';
+  }
+  function updRoute(r, sr) {
+    var p = still() ? 1 : clamp((vh * .92 - r.top) / (vh * .62), 0, 1);
     rDone.style.strokeDashoffset = (1 - p).toFixed(4);
-    var sr = rSvg.getBoundingClientRect(), sx = sr.width / 1000, sy = sr.height / 160;
+    var sx = sr.width / 1000, sy = sr.height / 160;
     if (stopW !== sr.width) {  /* автобус останавливается перед остановкой «Ай Про», не наезжая на неё */
       stopW = sr.width; stopLen = rLen;
       var end = rPath.getPointAtLength(rLen);
@@ -316,70 +237,201 @@
     var ang = Math.atan2((pt2.y - pt.y) * sy, (pt2.x - pt.x) * sx) * 180 / Math.PI;
     rBus.style.setProperty('--bx', x.toFixed(1) + 'px');
     rBus.style.setProperty('--by', y.toFixed(1) + 'px');
-    rBus.style.setProperty('--br', Math.max(-25, Math.min(25, ang)).toFixed(1) + 'deg');
+    rBus.style.setProperty('--br', clamp(ang, -25, 25).toFixed(1) + 'deg');
   }
 
-  /* ---------------- параллакс (только компьютер) и прогресс ---------------- */
-  var par = fine ? $$('[data-par]') : [];
-  var ticking = false;
-  var introSec = $('.drw > .intro'), sheetEl = $('.drw > .drw__sheet');
-  function updDrawer(vh) {
-    if (!introSec) return;
-    var p = clamp01(scrollY / vh);
-    introSec.style.setProperty('--dp', reduce ? 0 : p.toFixed(3));
-    if (sheetEl) sheetEl.style.setProperty('--sh', Math.min(1, scrollY / 60).toFixed(2));
-    if (introV) {
-      if (p > 0.97) { if (!introV.paused) { introV.pause(); introV._covered = true; } }
-      else if (introV._covered && introV.paused) { introV._covered = false; tryPlay(introV); }
+  /* ---------------- кадр прокрутки: сначала всё измеряем, потом всё двигаем ---------------- */
+  var hero = $('.hero'), heroPin = hero && $('.pin', hero), lines = $$('.hero__h .l');
+  var colsBox = $('.cols'), cols = $$('.cols .col'), cards = $$('.stack .lvl');
+  var sm = { hero: -1, estate: -1, night: -1 }, running = false, tPrev = 0;
+  var progress = function (r) { return clamp(-r.top / Math.max(1, r.height - vh), 0, 1); };
+  var near = function (r) { return r.bottom > -vh * .5 && r.top < vh * 1.5; };
+  function kick() { if (!running) { running = true; requestAnimationFrame(frame); } }
+  function smooth(key, target, k) {  /* мягкое догоняние прокрутки; true — ещё в пути */
+    var v = sm[key];
+    if (v < 0 || k >= 1 || Math.abs(target - v) < .0004) { sm[key] = target; return false; }
+    sm[key] = lerp(v, target, k);
+    return true;
+  }
+  function frame(now) {
+    running = false;
+    var dt = tPrev ? Math.min(64, now - tPrev) : 16.7; tPrev = now;
+    var calm = still(), k = calm ? 1 : 1 - Math.pow(1 - .16, dt / 16.7), moving = false;
+    /* --- измерения --- */
+    if (pinsDirty && pins.length) measurePins();
+    var tone = 'dark', overHero = true;
+    for (var i = scenes.length - 1; i >= 0; i--) {
+      var rs = scenes[i].getBoundingClientRect();
+      if (rs.top <= 34 && rs.bottom > 34) { tone = scenes[i].dataset.tone; overHero = scenes[i] === hero; break; }
     }
-  }
-  function frame() {
-    ticking = false;
-    var vh = innerHeight, max = root.scrollHeight - vh;
-    updDrawer(vh);
-    if (bar) bar.style.transform = 'scaleX(' + (max > 0 ? Math.min(1, scrollY / max) : 0).toFixed(4) + ')';
-    updSeqs(); updArcs(); updRoute();
-    if (reduce || isA11y()) return;
-    par.forEach(function (el) {
-      var r = el.parentElement.getBoundingClientRect();
-      if (r.bottom < -300 || r.top > vh + 300) return;
-      el.style.translate = '0 ' + ((r.top + r.height / 2 - vh / 2) * (parseFloat(el.dataset.par) || 0)).toFixed(1) + 'px';
-    });
-  }
-  addEventListener('scroll', function () { if (!ticking) { ticking = true; requestAnimationFrame(frame); } }, { passive: true });
-  addEventListener('resize', function () { seqs.forEach(function (q) { q.size(); q.draw(q.cur); }); frame(); });
-  frame();
+    var rHero = hero && hero.getBoundingClientRect(), rEst = estate && estate.getBoundingClientRect(), rNight = night && night.getBoundingClientRect();
+    var rCols = colsBox && colsBox.getBoundingClientRect();
+    var rHeads = heads.map(function (h) { return h.el.getBoundingClientRect(); });
+    var rCards = calm ? [] : cards.map(function (c) { return c.getBoundingClientRect(); });
+    var rRoute = route && route.getBoundingClientRect(), rSvgBox = route && rSvg.getBoundingClientRect();
+    var pinBox = null;
+    if (calm && estatePin && !isA11y() && near(rEst)) {  /* без движения: метки по неподвижной картинке макета */
+      var pw = estatePin.clientWidth, ph = estatePin.clientHeight, ps = Math.min(pw / 780, ph / 1040);
+      pinBox = { x: (pw - 780 * ps) / 2, y: (ph - 1040 * ps) / 2, s: ps };
+    }
 
-  /* ---------------- окна: меню, программы, сведения, помощник ---------------- */
-  var openStack = [];
+    /* --- шапка --- */
+    hd.classList.toggle('is-light', tone === 'light');
+    hd.classList.toggle('is-solid', !overHero || (rHero && rHero.bottom < vh * .98));  /* видео уходит вверх — шапке нужна подложка */
+
+    if (!calm) {
+      /* 1. солнце раскрывается в видео */
+      if (hero) {
+        moving = smooth('hero', progress(rHero), k) || moving;
+        if (near(rHero)) {
+          var p = sm.hero, open = ease(seg(p, 0, .78));
+          var r0 = Math.min(vw, vh) * (wide ? .155 : .2), r1 = Math.hypot(vw, vh) * .62, R = lerp(r0, r1, open);
+          var hs = heroPin.style;
+          hs.setProperty('--r', R.toFixed(1) + 'px');
+          hs.setProperty('--s', (R / .27).toFixed(1) + 'px');
+          hs.setProperty('--tint', (.36 * (1 - seg(p, 0, .4))).toFixed(3));
+          hs.setProperty('--ringop', (1 - seg(p, .45, .75)).toFixed(3));
+          hs.setProperty('--shade', seg(p, .5, .85).toFixed(3));
+          hs.setProperty('--hint', (1 - seg(p, 0, .12)).toFixed(3));
+          hs.setProperty('--eye', (1 - seg(p, .12, .36)).toFixed(3));
+          var spread = ease(seg(p, 0, .7));
+          if (lines.length === 4) {
+            lines[0].style.transform = 'translate3d(0,' + (-spread * vh * .035).toFixed(1) + 'px,0)';
+            lines[1].style.transform = 'translate3d(' + (spread * vw * .04).toFixed(1) + 'px,' + (-spread * vh * .035).toFixed(1) + 'px,0)';
+            lines[2].style.transform = 'translate3d(' + (-spread * vw * .06).toFixed(1) + 'px,' + (spread * vh * .02).toFixed(1) + 'px,0)';
+            lines[3].style.transform = 'translate3d(0,' + (spread * vh * .02).toFixed(1) + 'px,0)';
+          }
+        }
+      }
+
+      /* 2. особняк утром: метки, потом подлёт камеры к воротам */
+      if (sDay) {
+        moving = smooth('estate', progress(rEst), k) || moving;
+        if (near(rEst) && sDay.started) {
+          var pe = sm.estate, fly = ease(seg(pe, .3, .92)), fi = Math.round(fly * (sDay.n - 1));
+          sDay.offY = (wide ? .06 : .05) * (1 - fly);
+          sDay.offX = wide ? .16 * (1 - fly) : 0;
+          sDay.cur = fi; sDay.draw(fi, wide ? lerp(.25, 1, fly) : lerp(.32, 1, fly));
+          estatePin.style.setProperty('--headop', (1 - seg(pe, .28, .4)).toFixed(3));
+          estatePin.style.setProperty('--arr', seg(pe, .86, .97).toFixed(3));
+          placePins(sDay.box, pe, false);
+        }
+      }
+
+      /* 3. коллаж: колонки едут с разной скоростью */
+      if (rCols && rCols.bottom > -200 && rCols.top < vh + 200) {
+        var lp = (vh - rCols.top) / (vh + rCols.height);
+        cols.forEach(function (c) { c.style.transform = 'translate3d(0,' + ((lp - .5) * (+c.dataset.speed) * rCols.height).toFixed(1) + 'px,0)'; });
+      }
+
+      /* 4. программы: следующая карточка накрывает предыдущую, та чуть отступает в глубину */
+      for (var c = 0; c < cards.length - 1; c++) {
+        var a = rCards[c], b = rCards[c + 1];
+        if (a.bottom < -50 || a.top > vh) continue;
+        var q = clamp((a.bottom - b.top) / Math.max(1, a.height), 0, 1);
+        cards[c].style.setProperty('--q', q.toFixed(3));
+      }
+
+      /* 6. ночь: камера отъезжает, прощание сменяется записью */
+      if (sNight) {
+        moving = smooth('night', progress(rNight), k) || moving;
+        if (near(rNight) && sNight.started) {
+          var pn = sm.night, back = ease(seg(pn, .05, .8)), ni = Math.round(back * (sNight.n - 1));
+          sNight.offY = (wide ? -.07 : -.06) * back;
+          sNight.offX = wide ? .2 * back : 0;
+          sNight.cur = ni; sNight.draw(ni, wide ? lerp(1, .45, back) : lerp(1, .15, back));
+          nightPin.style.setProperty('--bye', (1 - seg(pn, .35, .55)).toFixed(3));
+          nightPin.style.setProperty('--cta', seg(pn, .62, .85).toFixed(3));
+          nightPin.classList.add('is-run');
+          nightPin.classList.toggle('cta-on', pn > .68);
+        }
+      }
+    } else if (pinBox) placePins(pinBox, 1, true);
+
+    /* 5. время дня в заголовках глав */
+    heads.forEach(function (h, i) {
+      var r = rHeads[i];
+      if (r.bottom < -100 || r.top > vh + 100) return;
+      var p = calm ? 1 : ease(clamp((vh - r.top) / (vh * .6), 0, 1));
+      if (Math.abs(p - h.last) < .0005) return;
+      h.last = p;
+      var pt = bez(lerp(h.a0, h.a1, p));
+      h.sun.style.left = (pt[0] * 100).toFixed(2) + '%';
+      h.sun.style.top = (pt[1] * 100).toFixed(2) + '%';
+      var txt = p >= 1 ? h.clock.dataset.time : fmtT(lerp(h.t0, h.t1, p));
+      if (h.clock.textContent !== txt) h.clock.textContent = txt;
+    });
+
+    /* трансфер */
+    if (route && rRoute.bottom > -100 && rRoute.top < vh + 100) updRoute(rRoute, rSvgBox);
+
+    if (moving) kick();
+  }
+  addEventListener('scroll', kick, { passive: true });
+  addEventListener('resize', function () {
+    vw = innerWidth; vh = innerHeight; wide = vw >= 900;
+    seqs.forEach(function (s) { if (s.started) s.size(); s.drawn = -1; });
+    pinsDirty = true; stopW = -1;
+    heads.forEach(function (h) { h.last = -1; });
+    kick();
+  });
+  if (d.fonts && d.fonts.ready) d.fonts.ready.then(function () { pinsDirty = true; kick(); });
+  addEventListener('load', kick);
+
+  /* при переходе в «без движения» снимаем всё, что подвинул скрипт */
+  function calmDown() {
+    lines.forEach(function (l) { l.style.transform = ''; });
+    cols.forEach(function (c) { c.style.transform = ''; });
+    cards.forEach(function (c) { c.style.removeProperty('--q'); });
+    if (heroPin) ['--r', '--s', '--tint', '--ringop', '--shade', '--hint', '--eye'].forEach(function (v) { heroPin.style.removeProperty(v); });
+    if (estatePin) ['--headop', '--arr'].forEach(function (v) { estatePin.style.removeProperty(v); });
+    if (nightPin) { ['--bye', '--cta'].forEach(function (v) { nightPin.style.removeProperty(v); }); nightPin.classList.remove('is-run', 'cta-on'); }
+    seqs.forEach(function (s) { s.sleep(); });
+    heads.forEach(function (h) { h.last = -1; });
+    sm.hero = sm.estate = sm.night = -1;
+  }
+  function wake() {
+    seqs.forEach(function (s) {
+      var r = s.el.getBoundingClientRect();
+      if (r.bottom > -vh * 1.5 && r.top < vh * 2.5) { s.size(); s.start(); }
+    });
+    heads.forEach(function (h) { h.last = -1; });
+    kick();
+  }
+  if (reduceMQ.addEventListener) reduceMQ.addEventListener('change', function (e) { reduce = e.matches; if (reduce) calmDown(); else wake(); kick(); });
+  if (still()) calmDown();
+  kick();
+
+  /* ---------------- окна: меню, программы, сведения, альбомы, помощник ---------------- */
   function anyOpen() { return $('dialog[open]'); }
   function openD(id) {
     var dl = d.getElementById(id);
     if (!dl || dl.tagName !== 'DIALOG') return;
-    if (id !== 'lightbox') $$('dialog[open]').forEach(function (x) { if (x !== dl) closeD(x, true); });
+    if (id !== 'lightbox') $$('dialog[open]').forEach(function (x) { if (x !== dl) closeD(x); });
     if (!dl.open) { if (dl.showModal) dl.showModal(); else dl.setAttribute('open', ''); }
     if (dl.classList.contains('pm')) { dl.scrollTop = 0; try { history.replaceState(null, '', '#' + id); } catch (e) {} }
+    if (id === 'docs') { try { history.replaceState(null, '', '#docs'); } catch (e) {} }
     root.classList.add('modal-open');
-    if (id === 'menu') chapBtn.setAttribute('aria-expanded', 'true');
+    if (id === 'menu' && menuBtn) menuBtn.setAttribute('aria-expanded', 'true');
     $$('video', dl).forEach(function (v) { v.muted = true; tryPlay(v); });
   }
-  function closeD(dl, keepHash) {
+  function closeD(dl) {
     if (!dl) return;
     if (dl.close) dl.close(); else { dl.removeAttribute('open'); dl.dispatchEvent(new Event('close')); }
   }
   $$('dialog').forEach(function (dl) {
     dl.addEventListener('close', function () {
       $$('video', dl).forEach(function (v) { v.pause(); });
-      if (dl.id === 'menu') chapBtn.setAttribute('aria-expanded', 'false');
+      if (dl.id === 'menu' && menuBtn) menuBtn.setAttribute('aria-expanded', 'false');
       if (dl.id === 'lightbox') $('#lbStage').innerHTML = '';
       if (!anyOpen()) {
         root.classList.remove('modal-open');
         if (/^#(m-|docs)/.test(location.hash)) { try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {} }
       }
     });
-    dl.addEventListener('click', function (e) { if (e.target === dl) closeD(dl); });
+    dl.addEventListener('click', function (e) { if (e.target === dl) closeD(dl); });  /* клик по затемнению */
   });
-  chapBtn.addEventListener('click', function () { openD('menu'); });
+  if (menuBtn) menuBtn.addEventListener('click', function () { openD('menu'); });
   d.addEventListener('click', function (e) {
     var t = e.target.closest('[data-open],[data-close],[data-close-go],[data-go],[data-jump],[data-album]');
     if (!t) return;
@@ -387,18 +439,12 @@
     if (t.hasAttribute('data-jump')) {
       e.preventDefault();
       var tg = d.getElementById(t.getAttribute('href').slice(1));
-      if (tg) tg.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+      if (tg) tg.scrollIntoView({ behavior: still() ? 'auto' : 'smooth', block: 'start' });
       return;
     }
     if (t.hasAttribute('data-album')) { e.preventDefault(); openAlbum(t.getAttribute('data-album')); return; }
+    if (t.hasAttribute('data-close')) { e.preventDefault(); closeD(t.closest('dialog')); return; }
     var target = t.getAttribute('data-go') || t.getAttribute('data-close-go');
-    if (t.hasAttribute('data-close')) {
-      e.preventDefault();
-      closeD(t.closest('dialog'));
-      var h = t.getAttribute('href');
-      if (h && h.length > 1) setTimeout(function () { go(h.slice(1)); }, 60);
-      return;
-    }
     if (target) {
       e.preventDefault();
       var open = anyOpen();
@@ -419,7 +465,8 @@
   try { ALB = JSON.parse($('#albumData').textContent); } catch (e) {}
   var playIco = ($('#albumPlay') || {}).innerHTML || '';
   function renderAlbum(k) {
-    var a = ALB[k]; if (!a) return false;
+    var a = ALB[k];
+    if (!a) return false;
     albKey = k;
     $('#albumT').textContent = a.t;
     var sub = $('#albumSub'); sub.textContent = a.sub || ''; sub.hidden = !a.sub;
@@ -440,7 +487,8 @@
   }
   function openAlbum(k) { if (renderAlbum(k)) { openD('album'); showTab(); } }
   (function () {
-    var dlg = $('#album'); if (!dlg) return;
+    var dlg = $('#album');
+    if (!dlg) return;
     dlg.addEventListener('click', function (e) {
       var tb = e.target.closest('[data-album-tab]');
       if (tb) { renderAlbum(tb.getAttribute('data-album-tab')); return; }
@@ -451,9 +499,8 @@
   function lbShow(i) {
     if (!lbList.length) return;
     lbIndex = (i + lbList.length) % lbList.length;
-    var it = lbList[lbIndex], stage = $('#lbStage');
+    var it = lbList[lbIndex], stage = $('#lbStage'), m;
     stage.innerHTML = '';
-    var m;
     if (it.k === 'v') {
       m = d.createElement('video');
       m.src = it.full; m.poster = it.pf || it.th; m.controls = true; m.playsInline = true; m.loop = true; m.autoplay = true; m.muted = true;
@@ -472,34 +519,23 @@
     if (e.key === 'ArrowRight') lbShow(lbIndex + 1);
     if (e.key === 'ArrowLeft') lbShow(lbIndex - 1);
   });
-  /* свайп в лайтбоксе на телефоне */
-  (function () {
-    var lb = $('#lightbox'); if (!lb) return;
+  (function () {  /* свайп в просмотре на телефоне */
+    var lb = $('#lightbox');
+    if (!lb) return;
     var x0 = null, y0 = 0;
     lb.addEventListener('touchstart', function (e) { var t = e.touches[0]; x0 = t.clientX; y0 = t.clientY; }, { passive: true });
     lb.addEventListener('touchend', function (e) {
       if (x0 === null) return;
-      var t = e.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0; x0 = null;
+      var t = e.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0;
+      x0 = null;
       if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.4) lbShow(lbIndex + (dx < 0 ? 1 : -1));
     }, { passive: true });
   })();
-
-  /* ---------------- отзывы: листание ---------------- */
-  $$('.carousel').forEach(function (c) {
-    var tr = $('.carousel__track', c);
-    $$('.carousel__nav button', c).forEach(function (b) {
-      b.addEventListener('click', function () {
-        var card = tr.firstElementChild, step = card ? card.getBoundingClientRect().width + 16 : 300;
-        tr.scrollBy({ left: step * (+b.dataset.dir), behavior: reduce ? 'auto' : 'smooth' });
-      });
-    });
-  });
 
   /* ---------------- новости и объявления: assets/data/news.json ---------------- */
   (function () {
     var list = $('#newsList'), sec = $('#news');
     if (!list) return;
-    var esc = escH;
     var arrow = '<svg class="i" aria-hidden="true"><use href="#i-arrow-right"/></svg>';
     var fmtDate = function (s) {
       var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || '');
@@ -514,17 +550,18 @@
       if (!items.length) { sec.hidden = true; return; }
       items.sort(function (a, b) { return (b.pin ? 1 : 0) - (a.pin ? 1 : 0) || String(b.date || '').localeCompare(String(a.date || '')); });
       list.innerHTML = items.map(function (n) {
+        var go = /^#[\w-]+$/.test(n.link) ? ' data-go="' + escH(n.link.slice(1)) + '"' : '';
         return '<article class="news__card is-in' + (n.pin ? ' is-pin' : '') + '">' +
-          (n.image ? '<img src="' + esc(n.image) + '" alt="" loading="lazy">' : '') +
-          '<div class="news__meta">' + (n.tag ? '<span class="news__tag">' + esc(n.tag) + '</span>' : '') + (n.date ? '<time datetime="' + esc(n.date) + '">' + esc(fmtDate(n.date)) + '</time>' : '') + '</div>' +
-          '<h3>' + esc(n.title) + '</h3><p>' + esc(n.text) + '</p>' +
-          (n.link ? '<a class="news__more" href="' + esc(n.link) + '"' + (/^https?:/.test(n.link) ? ' target="_blank" rel="noopener"' : '') + '>' + esc(n.link_text || 'Подробнее') + arrow + '</a>' : '') +
+          (n.image ? '<img src="' + escH(n.image) + '" alt="" loading="lazy">' : '') +
+          '<div class="news__meta">' + (n.tag ? '<span class="news__tag">' + escH(n.tag) + '</span>' : '') + (n.date ? '<time datetime="' + escH(n.date) + '">' + escH(fmtDate(n.date)) + '</time>' : '') + '</div>' +
+          '<h3>' + escH(n.title) + '</h3><p>' + escH(n.text) + '</p>' +
+          (n.link ? '<a class="news__more" href="' + escH(n.link) + '"' + go + (/^https?:/.test(n.link) ? ' target="_blank" rel="noopener"' : '') + '>' + escH(n.link_text || 'Подробнее') + arrow + '</a>' : '') +
           '</article>';
       }).join('');
     }
     var seed = [];
     try { seed = JSON.parse($('#newsSeed').textContent); } catch (e) {}
-    if (location.protocol === 'file:') { render(seed); return; }
+    if (location.protocol === 'file:' || !window.fetch) { render(seed); return; }
     fetch('assets/data/news.json', { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : Promise.reject(); })
       .then(render).catch(function () { render(seed); });
   })();
@@ -533,12 +570,12 @@
   (function () {
     var form = $('#signupForm'), sent = $('#signupSent');
     if (!form) return;
-    var C = { wa: 'https://wa.me/79781600505' };
+    var WA = 'https://wa.me/79781600505';
     var field = function (name) { return form.elements.namedItem(name); };
     function showSent(ok, text) {
       form.hidden = true; sent.hidden = false;
       if (ok) { $('#sentTitle').textContent = 'Заявка отправлена'; $('#sentText').textContent = 'Перезвоним в течение рабочего дня. Хотите быстрее — напишите нам:'; }
-      $('#sentWa').href = C.wa + '?text=' + encodeURIComponent(text);
+      $('#sentWa').href = WA + '?text=' + encodeURIComponent(text);
       sent.focus();
     }
     form.addEventListener('input', function (e) { var f = e.target.closest('.field'); if (f) f.classList.remove('is-bad'); });
@@ -552,7 +589,8 @@
       var text = 'Здравствуйте! Хочу записаться на пробные дни в Ай Про.\nИмя: ' + name + (age ? '\nВозраст ребёнка: ' + age : '') + '\nТелефон: ' + phone;
       var ep = form.dataset.endpoint;
       if (!ep) { showSent(false, text); return; }
-      var btn = $('.form__go', form); btn.disabled = true;
+      var btn = $('.form__go', form);
+      btn.disabled = true;
       fetch(ep, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ name: name, age: age, phone: phone }) })
         .then(function (r) { showSent(r.ok, text); }).catch(function () { showSent(false, text); })
         .then(function () { btn.disabled = false; });
@@ -567,10 +605,13 @@
     try { data = JSON.parse($('#helperData').textContent); } catch (e) {}
     var bub = function (text, me) { var p = d.createElement('p'); p.className = 'bub' + (me ? ' bub--me' : ''); p.textContent = text; log.appendChild(p); log.scrollTop = log.scrollHeight; return p; };
     qs.addEventListener('click', function (e) {
-      var b = e.target.closest('button[data-q]'); if (!b) return;
-      var item = data[+b.dataset.q]; if (!item) return;
+      var b = e.target.closest('button[data-q]');
+      if (!b) return;
+      var item = data[+b.dataset.q];
+      if (!item) return;
       bub(item.q, true);
-      var dots = d.createElement('p'); dots.className = 'bub bub--dots'; dots.setAttribute('aria-label', 'Помощник печатает'); dots.innerHTML = '<i></i><i></i><i></i>';
+      var dots = d.createElement('p');
+      dots.className = 'bub bub--dots'; dots.setAttribute('aria-label', 'Помощник печатает'); dots.innerHTML = '<i></i><i></i><i></i>';
       log.appendChild(dots); log.scrollTop = log.scrollHeight;
       setTimeout(function () { dots.remove(); item.a.forEach(function (a) { bub(a); }); }, reduce ? 0 : 650);
     });
@@ -587,12 +628,13 @@
       root.classList.toggle('a11y', on);
       try { localStorage.setItem('ipro-a11y', on ? '1' : '0'); } catch (e) {}
       syncA11y();
-      if (!on) { seqs.forEach(function (q) { q.size(); q.load(); }); frame(); }
+      if (on) calmDown(); else if (!reduce) wake();
+      kick();
     });
   });
   syncA11y();
 
   /* ---------------- карта в подвале: грузим, когда подвал рядом ---------------- */
   var map = $('.foot__map iframe');
-  if (map) new IntersectionObserver(function (es, o) { if (es[0].isIntersecting) { map.src = map.dataset.src; o.disconnect(); } }, { rootMargin: '400px 0px' }).observe(map);
+  if (map) watch([map], { rootMargin: '400px 0px' }, function (el, on, o) { if (on) { el.src = el.dataset.src; if (o) o.disconnect(); } });
 })();
