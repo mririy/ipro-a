@@ -244,21 +244,30 @@
   });
 
   /* ---------------- трансфер: автобус едет по маршруту ---------------- */
-  var route = $('[data-route]'), rPath, rDone, rBus, rSvg, rLen = 0, stopW = -1, stopLen = 0;
+  var route = $('[data-route]'), rPath, rDone, rBus, rSvg, rLen = 0, stopW = -1, stopLen = 0, cum = [], RK = 240;
   if (route) {
     rPath = $('.route__line', route); rDone = $('.route__done', route); rBus = $('.route__bus', route); rSvg = $('svg', route);
-    rLen = rPath.getTotalLength(); rDone.setAttribute('pathLength', '1'); rDone.style.strokeDasharray = '1 1';
+    rLen = rPath.getTotalLength();
   }
   function updRoute(r, sr) {
     var p = still() ? 1 : clamp((vh * .92 - r.top) / (vh * .62), 0, 1);
-    rDone.style.strokeDashoffset = (1 - p).toFixed(4);
-    var sx = sr.width / 1000, sy = sr.height / 160;
-    if (stopW !== sr.width) {  /* автобус останавливается перед остановкой «Ай Про», не наезжая на неё */
+    var sx = sr.width / 1000, sy = sr.height / 160, k, q, prev;
+    if (stopW !== sr.width) {
       stopW = sr.width; stopLen = rLen;
+      /* длина пути на экране (рисунок растянут по ширине): линия маршрута тянется ровно за автобусом */
+      cum = [0];
+      for (k = 1, prev = rPath.getPointAtLength(0); k <= RK; k++) {
+        q = rPath.getPointAtLength(rLen * k / RK);
+        cum.push(cum[k - 1] + Math.hypot((q.x - prev.x) * sx, (q.y - prev.y) * sy));
+        prev = q;
+      }
+      /* автобус останавливается перед остановкой «Ай Про», не наезжая на неё */
       var end = rPath.getPointAtLength(rLen);
-      for (var k = rLen; k > 0; k -= rLen / 240) { var q = rPath.getPointAtLength(k); if (Math.hypot((end.x - q.x) * sx, (end.y - q.y) * sy) >= 62) { stopLen = k; break; } }
+      for (k = rLen; k > 0; k -= rLen / RK) { q = rPath.getPointAtLength(k); if (Math.hypot((end.x - q.x) * sx, (end.y - q.y) * sy) >= 62) { stopLen = k; break; } }
     }
-    var pt = rPath.getPointAtLength(stopLen * p), pt2 = rPath.getPointAtLength(Math.min(rLen, stopLen * p + 2));
+    var u = stopLen * p, fi = u / rLen * RK, f0 = Math.floor(fi), done = cum[f0] + (cum[Math.min(RK, f0 + 1)] - cum[f0]) * (fi - f0);
+    rDone.style.strokeDasharray = done.toFixed(1) + ' ' + (cum[RK] + 20).toFixed(0);
+    var pt = rPath.getPointAtLength(u), pt2 = rPath.getPointAtLength(Math.min(rLen, u + 2));
     var x = (sr.left - r.left) + pt.x * sx, y = (sr.top - r.top) + pt.y * sy;
     var ang = Math.atan2((pt2.y - pt.y) * sy, (pt2.x - pt.x) * sx) * 180 / Math.PI;
     rBus.style.setProperty('--bx', x.toFixed(1) + 'px');
