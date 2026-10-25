@@ -264,7 +264,13 @@ PINS = [(330, 452, 'Особняк в 5 этажей'), (625, 588, 'Летний
 
 def about():
     a = ABOUT
-    vids = ''.join(f'<figure class="trio__v rv">{video(v, "", label)}<figcaption>{e(label)}</figcaption></figure>' for v, label in a['videos'])
+    tiles = ''
+    for i, (kind, name, label) in enumerate(a['inside']):
+        if kind == 'video':
+            media = video(name, '', label)
+        else:
+            media = f'<img src="assets/img/{name}.jpg"{ss(name, "(max-width: 900px) 92vw, 45vw" if i % 3 == 0 else "(max-width: 900px) 46vw, 30vw")} alt="{e(label)}" loading="lazy">'
+        tiles += f'<figure class="in-t rv">{media}<figcaption>{e(label)}</figcaption></figure>'
     pins = ''.join(f'<li data-x="{x}" data-y="{y}"><span>{e(t)}</span></li>' for x, y, t in PINS)
     body = f'''  <div class="estate" data-seq="estate" data-frames="61" data-path="assets/seq/estate" data-ext="webp">
     <div class="pin">
@@ -277,7 +283,11 @@ def about():
     </div>
   </div>
   <div class="wrap about__more">
-    <div class="trio">{vids}</div>
+    <div class="inside">
+      <div class="inside__head">{kick(a['inside_kick'])}{h2(a['inside_title'], a['inside_em'])}</div>
+      <div class="inside__grid">{tiles}</div>
+      {more('Все фото особняка', 'button', ' data-album="inside"', 'more--pill rv')}
+    </div>
     <figure class="director rv">
       <blockquote>{e(a['quote'])}</blockquote>
       <figcaption>{e(a['sign'])}</figcaption>
