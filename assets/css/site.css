@@ -564,8 +564,7 @@ html.rv-ready .ph.rv.is-in img,html.rv-ready .ph.rv.is-in video,html.rv-ready .d
   .num:last-child b{font-size:clamp(26px,2.8vw,46px);line-height:2.1}
   .grps{grid-template-columns:1fr 1fr;gap:16px}
   .grp{padding:36px 32px 18px}
-  .estate__head{max-width:46%}
-  .estate__head .h2{font-size:clamp(34px,3.8vw,58px)}
+  .estate__head .h2{font-size:clamp(34px,3.8vw,58px);max-width:min(36vw,12ch)}
   .trio{grid-template-columns:repeat(3,1fr);gap:16px}
   .trio__v,.trio__v:nth-child(3){grid-column:auto;aspect-ratio:3/4}
   .director{margin-inline:auto;text-align:center}

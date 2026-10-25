@@ -108,10 +108,17 @@
   }
 
   /* ---------------- видео: играет только то, что на экране ---------------- */
-  watch($$('main video'), { threshold: 0.25 }, function (v, on) {
+  watch($$('main video').filter(function (v) { return v !== introV; }), { threshold: 0.25 }, function (v, on) {
     v.muted = true;
-    if (on && !(reduce && v !== introV)) { if (v.paused) tryPlay(v); }
+    if (on && !reduce) { if (v.paused) tryPlay(v); }
     else if (!v.paused) v.pause();
+  });
+  /* видео первого экрана видно в круге-солнце (clip-path), поэтому следим за всей сценой, а не за самим видео */
+  var heroSc = $('.hero');
+  if (introV && heroSc) watch([heroSc], { threshold: 0 }, function (el, on) {
+    introV.muted = true;
+    if (on) { if (introV.paused) tryPlay(introV); }
+    else if (!introV.paused) introV.pause();
   });
 
   /* ---------------- цифры набегают ---------------- */
@@ -159,6 +166,24 @@
     this.dpr = cw ? w / cw : dpr;
     if (w !== this.w || h !== this.h) { this.c.width = this.w = w; this.c.height = this.h = h; this.drawn = -1; }
   };
+  /* края кадра, попавшие внутрь экрана, растворяются в фоне — без резкой границы у тени макета */
+  Seq.prototype.feather = function (x, y, dw, dh) {
+    var c = this.ctx, W = this.w, H = this.h, bg = this.bg, clear = this.bgClear, g, f;
+    if (!clear) {
+      var hx = bg.replace('#', '');
+      clear = this.bgClear = 'rgba(' + [0, 2, 4].map(function (k) { return parseInt(hx.substr(k, 2), 16); }).join(',') + ',0)';
+    }
+    var band = function (x0, y0, x1, y1, rx, ry, rw, rh) {
+      g = c.createLinearGradient(x0, y0, x1, y1); g.addColorStop(0, bg); g.addColorStop(1, clear);
+      c.fillStyle = g; c.fillRect(rx, ry, rw, rh);
+    };
+    f = Math.min(dw * .16, 180 * this.dpr);
+    if (x > 0) band(x, 0, x + f, 0, x - 1, y, f + 1, dh);
+    if (x + dw < W) band(x + dw, 0, x + dw - f, 0, x + dw - f, y, f + 1, dh);
+    f = Math.min(dh * .1, 120 * this.dpr);
+    if (y > 0) band(0, y, 0, y + f, x, y - 1, dw, f + 1);
+    if (y + dh < H) band(0, y + dh, 0, y + dh - f, x, y + dh - f, dw, f + 1);
+  };
   Seq.prototype.nearest = function (i) {
     if (this.imgs[i]) return i;
     for (var k = 1; k < this.n; k++) { if (this.imgs[i - k]) return i - k; if (this.imgs[i + k]) return i + k; }
@@ -174,6 +199,7 @@
     var dw = iw * s, dh = ih * s, x = (W - dw) / 2 + this.offX * W, y = (H - dh) / 2 + this.offY * H;
     this.ctx.fillStyle = this.bg; this.ctx.fillRect(0, 0, W, H);
     this.ctx.drawImage(im, x, y, dw, dh);
+    this.feather(x, y, dw, dh);
     this.drawn = j; this.fit = fit; this._ox = this.offX; this._oy = this.offY;
     this.box = { x: x / this.dpr, y: y / this.dpr, s: s / this.dpr };
     if (!this.live) { this.live = true; this.el.classList.add('is-live'); }
@@ -310,7 +336,7 @@
         if (near(rEst) && sDay.started) {
           var pe = sm.estate, fly = ease(seg(pe, .3, .92)), fi = Math.round(fly * (sDay.n - 1));
           sDay.offY = (wide ? .06 : .05) * (1 - fly);
-          sDay.offX = wide ? .16 * (1 - fly) : 0;
+          sDay.offX = wide ? .2 * (1 - fly) : 0;
           sDay.cur = fi; sDay.draw(fi, wide ? lerp(.25, 1, fly) : lerp(.32, 1, fly));
           estatePin.style.setProperty('--headop', (1 - seg(pe, .28, .4)).toFixed(3));
           estatePin.style.setProperty('--arr', seg(pe, .86, .97).toFixed(3));
