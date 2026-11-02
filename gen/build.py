@@ -768,7 +768,7 @@ def page():
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Onest:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Onest:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="assets/css/site.css?v={asset_v('assets/css/site.css')}">
 <script>document.documentElement.classList.add('js');try{{if(localStorage.getItem('ipro-a11y')==='1')document.documentElement.classList.add('a11y')}}catch(e){{}}</script>
 </head>
