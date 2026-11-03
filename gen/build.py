@@ -612,25 +612,86 @@ def pin_dialogs():
     return out
 
 
+def org_rows():
+    """Подраздел «Основные сведения» — пункты а)–з) приказа, одинаково в окне и на странице sveden/common/."""
+    o = ORG
+    phones = ''.join(f'<span class="kv__ph">{e(who)}: <a href="{href}">{e(num)}</a></span>' for who, num, href in o['phones'])
+    rows = [
+        ('Полное наименование', f'{e(o["full_name"])}<span class="kv__sub">Сокращённое: {e(o["short_name"])}</span>'),
+        ('Дата создания', e(o['founded'])),
+        ('Учредитель', e(o['founder'])),
+        ('Место нахождения', e(o['location'])),
+        ('График работы', e(o['hours'])),
+        ('Контактные телефоны', phones),
+        ('Электронная почта', f'<a href="mailto:{e(o["email"])}">{e(o["email"])}</a>'),
+        ('Место осуществления образовательной деятельности', e(o['edu_place'])),
+        ('Лицензия', f'{e(o["license"])}<span class="kv__sub">{e(o["license_kinds"])}</span>'),
+    ]
+    return '<dl class="kv kv--org">' + ''.join(f'<dt>{t}</dt><dd>{v}</dd>' for t, v in rows) + '</dl>'
+
+
 def docs_dialog():
-    c = CONTACTS
     docs = ''.join(f'<li>{I(ic)}<span><b>{e(t)}</b>{e(s)}</span></li>' for ic, t, s in ADMISSION['docs'])
     return f'''<dialog class="sheet" id="docs" aria-labelledby="docsT">
   <div class="sheet__bar"><h2 id="docsT">Сведения об образовательной организации</h2><button class="xbtn" type="button" data-close aria-label="Закрыть">{I('x')}</button></div>
   <div class="sheet__body">
+    <p class="label">Основные сведения</p>
+    {org_rows()}
+    <a class="more docs__page" href="sveden/common/">Раздел на отдельной странице{I('arrow-right')}</a>
     <p class="label">Лицензия и документы</p>
     <ul class="docs__list">{docs}</ul>
-    <p class="label">Контакты организации</p>
-    <dl class="kv">
-      <dt>Адрес</dt><dd>{e(c['address'])}</dd>
-      <dt>Телефон</dt><dd><a href="{c['phone_href']}">{e(c['phone'])}</a></dd>
-      <dt>Электронная почта</dt><dd><a href="mailto:{c['email']}">{e(c['email'])}</a></dd>
-      <dt>Режим работы</dt><dd>{e(c['hours'])}</dd>
-    </dl>
     <p class="label">Реквизиты и документы</p>
-    <p class="ph-note">Полное наименование, ИНН, ОГРН, сканы лицензии и уставных документов разместим здесь по данным школы.</p>
+    <p class="ph-note">ИНН, ОГРН, сканы лицензии и уставных документов разместим здесь по данным школы.</p>
   </div>
 </dialog>
+'''
+
+
+def sveden_page():
+    """Отдельная страница sveden/common/ — адрес подраздела «Основные сведения» по требованиям к сайту."""
+    return f'''<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Основные сведения · {e(ORG['short_name'])}</title>
+<link rel="icon" type="image/svg+xml" href="../../assets/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@700;800&family=Onest:wght@400;500;600&display=swap">
+<style>
+:root{{--navy:#0A2C55;--blue:#2A70B4;--ink:#22364F}}
+*{{box-sizing:border-box}}
+body{{margin:0;background:#F4F8FC;color:var(--navy);font:400 17px/1.55 "Onest",system-ui,-apple-system,"Segoe UI",Arial,sans-serif;-webkit-text-size-adjust:100%}}
+.w{{max-width:900px;margin:0 auto;padding:28px max(20px,env(safe-area-inset-left)) 64px}}
+.top{{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:28px}}
+.top img{{height:40px;width:auto}}
+.top a{{color:var(--blue);font-weight:600;text-decoration:none}}
+nav.crumbs{{font-size:14px;color:var(--ink);margin-bottom:10px}}
+nav.crumbs a{{color:var(--blue)}}
+h1{{margin:0 0 6px;font:800 clamp(26px,5vw,40px)/1.15 "Manrope",system-ui,sans-serif;letter-spacing:-.01em}}
+h2{{margin:28px 0 14px;font:800 22px/1.2 "Manrope",system-ui,sans-serif}}
+.card{{background:#fff;border-radius:22px;padding:8px 22px;box-shadow:0 10px 30px rgba(10,44,85,.08)}}
+.kv{{margin:0}}
+.kv dt{{padding-top:16px;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--blue)}}
+.kv dd{{margin:4px 0 0;padding-bottom:16px;border-bottom:1px solid rgba(10,44,85,.1);font-weight:500}}
+.kv dd:last-child{{border-bottom:0}}
+.kv__sub,.kv__ph{{display:block;margin-top:4px;color:var(--ink)}}
+.kv a{{color:var(--blue);font-weight:600}}
+.note{{margin-top:22px;padding:14px 16px;border-radius:16px;background:#FFF4CF;font-size:15px}}
+@media (min-width:720px){{.kv{{display:grid;grid-template-columns:240px 1fr;column-gap:24px}}.kv dt{{padding-bottom:16px;border-bottom:1px solid rgba(10,44,85,.1)}}.kv dt:nth-last-of-type(1){{border-bottom:0}}}}
+</style>
+</head>
+<body>
+<div class="w">
+  <div class="top"><a href="../../"><img src="../../assets/img/wordmark-aipro-navy.webp" alt="Ай Про — на главную"></a><a href="../../">На главную</a></div>
+  <nav class="crumbs" aria-label="Путь"><a href="../../">Главная</a> / Сведения об образовательной организации / Основные сведения</nav>
+  <h1>Основные сведения</h1>
+  <p>Сведения об образовательной организации</p>
+  <div class="card">{org_rows()}</div>
+  <p class="note">Остальные подразделы раздела — структура и органы управления, документы, образование, руководство, педагогический состав и другие — будут размещены по данным организации.</p>
+</div>
+</body>
+</html>
 '''
 
 
@@ -789,6 +850,11 @@ if __name__ == '__main__':
     html_out = add_dims(html_out)
     html_out = typo_html(html_out)
     open(os.path.join(OUT, 'index.html'), 'w', encoding='utf8').write(html_out)
+    # подраздел «Основные сведения» по адресу sveden/common/, sveden/ ведёт туда же
+    for sub, body in (('sveden/common', typo_html(sveden_page())),
+                      ('sveden', '<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=common/"><title>Сведения об образовательной организации</title><a href="common/">Основные сведения</a>')):
+        os.makedirs(os.path.join(OUT, sub), exist_ok=True)
+        open(os.path.join(OUT, sub, 'index.html'), 'w', encoding='utf8').write(body)
     os.makedirs(os.path.join(OUT, 'assets/data'), exist_ok=True)
     np = os.path.join(OUT, 'assets/data/news.json')
     if not os.path.exists(np) or '--reset-news' in sys.argv:
