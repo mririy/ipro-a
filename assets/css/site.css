@@ -52,7 +52,9 @@ button{font:inherit;color:inherit}
 .h2{margin-top:16px;font:760 clamp(30px,7.4vw,72px)/1.12 var(--display);letter-spacing:-.012em;color:var(--fg);max-width:18ch;text-wrap:balance}
 .h2--xl{font-size:clamp(34px,8.6vw,96px);max-width:15ch}
 .h2--long{font-size:clamp(22px,7vw,76px)}
-.h2 em,.h3 em{font-style:normal;color:var(--chip-fg);background:var(--chip);padding:0 .16em .04em;border-radius:.2em;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.h2 em,.h3 em{font-style:normal;color:var(--chip-fg);background:var(--chip);padding:0 .18em;border-radius:.22em;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+/* плашка выделения выше строки шрифта (1,25 em): строки с ней разводим, чтобы она не налезала на соседние слова */
+.h2:has(em),.h3:has(em){line-height:1.38}
 .h3{font:680 clamp(22px,4.6vw,40px)/1.1 var(--display);letter-spacing:-.012em;color:var(--fg);text-wrap:balance}
 .lead{margin-top:18px;max-width:40ch;font:500 clamp(18px,1.5vw,21px)/1.5 var(--text);color:var(--fg)}
 
