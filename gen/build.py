@@ -657,19 +657,19 @@ def sveden_page():
 <title>Основные сведения · {e(ORG['short_name'])}</title>
 <link rel="icon" type="image/svg+xml" href="../../assets/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@700;800&family=Onest:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geologica:wght,SHRP@500..800,0..100&family=Onest:wght@400;500;600&display=swap">
 <style>
 :root{{--navy:#0A2C55;--blue:#2A70B4;--ink:#22364F}}
 *{{box-sizing:border-box}}
-body{{margin:0;background:#F4F8FC;color:var(--navy);font:400 17px/1.55 "Onest",system-ui,-apple-system,"Segoe UI",Arial,sans-serif;-webkit-text-size-adjust:100%}}
+body{{font-variation-settings:"SHRP" 40;margin:0;background:#F4F8FC;color:var(--navy);font:400 17px/1.55 "Onest",system-ui,-apple-system,"Segoe UI",Arial,sans-serif;-webkit-text-size-adjust:100%}}
 .w{{max-width:900px;margin:0 auto;padding:28px max(20px,env(safe-area-inset-left)) 64px}}
 .top{{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:28px}}
 .top img{{height:40px;width:auto}}
 .top a{{color:var(--blue);font-weight:600;text-decoration:none}}
 nav.crumbs{{font-size:14px;color:var(--ink);margin-bottom:10px}}
 nav.crumbs a{{color:var(--blue)}}
-h1{{margin:0 0 6px;font:800 clamp(26px,5vw,40px)/1.15 "Manrope",system-ui,sans-serif;letter-spacing:-.01em}}
-h2{{margin:28px 0 14px;font:800 22px/1.2 "Manrope",system-ui,sans-serif}}
+h1{{margin:0 0 6px;font:760 clamp(26px,5vw,40px)/1.15 "Geologica",system-ui,sans-serif;letter-spacing:-.01em}}
+h2{{margin:28px 0 14px;font:760 22px/1.2 "Geologica",system-ui,sans-serif}}
 .card{{background:#fff;border-radius:22px;padding:8px 22px;box-shadow:0 10px 30px rgba(10,44,85,.08)}}
 .kv{{margin:0}}
 .kv dt{{padding-top:16px;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--blue)}}
@@ -829,7 +829,7 @@ def page():
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Onest:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geologica:wght,SHRP@500..800,0..100&family=Onest:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="assets/css/site.css?v={asset_v('assets/css/site.css')}">
 <script>document.documentElement.classList.add('js');try{{if(localStorage.getItem('ipro-a11y')==='1')document.documentElement.classList.add('a11y')}}catch(e){{}}</script>
 </head>
