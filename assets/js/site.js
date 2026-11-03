@@ -321,29 +321,31 @@
       if (hero) {
         moving = smooth('hero', progress(rHero), k) || moving;
         if (near(rHero)) {
-          /* туда: солнце раскрывается в видео; обратно: видео снова сжимается в солнце, и оно улетает в логотип */
-          var p = sm.hero, open = ease(seg(p, 0, .4)), close = ease(seg(p, .58, .8)), fly = ease(seg(p, .8, .96));
+          /* солнце раскрывается в видео; видео остаётся, а солнце снова появляется и улетает в логотип */
+          var p = sm.hero, open = ease(seg(p, 0, .4)), fly = ease(seg(p, .72, .94));
           var r0 = Math.min(vw, vh) * (wide ? .155 : .2), r1 = Math.hypot(vw, vh) * .62;
-          var R = lerp(lerp(r0, r1, open), r0, close);
-          var S = R / .27, cx = vw / 2, cy = vh * .56;
-          if (logoBox) {  /* солнце логотипа: центр и размер вместе с лучами */
+          var R = lerp(r0, r1, open), back = p > .5;  /* после раскрытия солнце — отдельно от видео */
+          var S = back ? r0 / .27 : R / .27, cx = vw / 2, cy = vh * .56;
+          if (back && logoBox) {  /* солнце логотипа: центр и размер вместе с лучами */
             var tx = logoBox.left + logoBox.width * .772, ty = logoBox.top + logoBox.height * .592, ts = logoBox.width * .47;
-            cx = lerp(cx, tx, fly); cy = lerp(cy, ty, fly); S = lerp(S, ts, fly); R = S * .27;
+            cx = lerp(cx, tx, fly); cy = lerp(cy, ty, fly); S = lerp(S, ts, fly);
           }
           var hs = heroPin.style;
           hs.setProperty('--r', R.toFixed(1) + 'px');
           hs.setProperty('--s', S.toFixed(1) + 'px');
           hs.setProperty('--cx', cx.toFixed(1) + 'px');
           hs.setProperty('--cy', cy.toFixed(1) + 'px');
-          hs.setProperty('--tint', (.36 * Math.max(1 - seg(p, 0, .25), seg(p, .62, .8))).toFixed(3));
-          hs.setProperty('--ringop', (Math.max(1 - seg(p, .28, .4), seg(p, .64, .78)) * (1 - seg(p, .965, 1))).toFixed(3));
-          hs.setProperty('--winop', (1 - seg(p, .82, .9)).toFixed(3));
-          hs.setProperty('--shade', (seg(p, .22, .4) * (1 - seg(p, .58, .72))).toFixed(3));
+          hs.setProperty('--mx', (vw / 2).toFixed(1) + 'px');
+          hs.setProperty('--my', (vh * .56).toFixed(1) + 'px');
+          hs.setProperty('--tint', (.36 * (1 - seg(p, 0, .25))).toFixed(3));
+          hs.setProperty('--ringop', (back ? seg(p, .6, .7) * (1 - seg(p, .955, 1)) : 1 - seg(p, .28, .4)).toFixed(3));
+          hs.setProperty('--winop', '1');
+          hs.setProperty('--shade', seg(p, .22, .4).toFixed(3));
           hs.setProperty('--hint', (1 - seg(p, 0, .08)).toFixed(3));
           hs.setProperty('--eye', (1 - seg(p, .06, .18)).toFixed(3));
-          hs.setProperty('--hop', (1 - seg(p, .6, .72)).toFixed(3));
+          hs.setProperty('--hop', '1');
           if (hdLogo) hdLogo.classList.toggle('is-catch', p > .955 && p < 1.01);
-          var spread = ease(seg(p, 0, .4)) * (1 - close);
+          var spread = ease(seg(p, 0, .4));
           if (lines.length === 4) {
             lines[0].style.transform = 'translate3d(0,' + (-spread * vh * .035).toFixed(1) + 'px,0)';
             lines[1].style.transform = 'translate3d(' + (spread * vw * .04).toFixed(1) + 'px,' + (-spread * vh * .035).toFixed(1) + 'px,0)';
@@ -433,7 +435,7 @@
     lines.forEach(function (l) { l.style.transform = ''; });
     cols.forEach(function (c) { c.style.transform = ''; });
     cards.forEach(function (c) { c.style.removeProperty('--q'); });
-    if (heroPin) ['--r', '--s', '--cx', '--cy', '--tint', '--ringop', '--winop', '--shade', '--hint', '--eye', '--hop'].forEach(function (v) { heroPin.style.removeProperty(v); });
+    if (heroPin) ['--r', '--s', '--cx', '--cy', '--tint', '--ringop', '--winop', '--shade', '--hint', '--eye', '--hop', '--mx', '--my'].forEach(function (v) { heroPin.style.removeProperty(v); });
     if (estatePin) ['--headop', '--arr'].forEach(function (v) { estatePin.style.removeProperty(v); });
     if (nightPin) { ['--bye', '--cta'].forEach(function (v) { nightPin.style.removeProperty(v); }); nightPin.classList.remove('is-run', 'cta-on'); }
     seqs.forEach(function (s) { s.sleep(); });
