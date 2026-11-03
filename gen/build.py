@@ -296,6 +296,7 @@ def about():
       <div class="wrap estate__arrive"><b>Добро пожаловать</b><p>Школа ждёт ребёнка с 8:30 до 18:00</p></div>
     </div>
   </div>
+  <div class="estate__fade" aria-hidden="true"></div>
   <div class="wrap about__more">
     <div class="inside">
       <div class="inside__head">{kick(a['inside_kick'])}{h2(a['inside_title'], a['inside_em'])}</div>
