@@ -47,8 +47,9 @@ button{font:inherit;color:inherit}
 .sc.is-cut:not(.hero):not(.night){padding-top:calc(var(--band) + 24px)}
 
 /* ---------- типографика ---------- */
-.kick{display:flex;align-items:center;gap:10px;font:600 12.5px/1.2 var(--text);letter-spacing:.16em;text-transform:uppercase;color:var(--fg)}
-.kick::before{content:"";flex:none;width:9px;height:9px;border-radius:50%;background:var(--sun);box-shadow:0 0 0 4px rgba(252,196,28,.28)}
+/* надзаголовок главы: маленькое солнце из логотипа и обычная фраза */
+.kick{display:flex;align-items:center;gap:10px;font:600 17px/1.3 var(--text);color:var(--fg)}
+.kick::before{content:"";flex:none;width:24px;height:24px;background:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%22-100 -100 200 200%22%3E%3Cpath d=%22M -51.96 -30 A 60 60 0 1 1 -51.96 30%22 fill=%22none%22 stroke=%22%23FCC41C%22 stroke-width=%2216%22 stroke-linecap=%22round%22/%3E%3Cg stroke=%22%23FCC41C%22 stroke-width=%2216%22 stroke-linecap=%22round%22%3E%3Cpath d=%22M0 -78V-96%22/%3E%3Cpath d=%22M39 -67.5L48 -83%22/%3E%3Cpath d=%22M67.5 -39L83 -48%22/%3E%3Cpath d=%22M78 0H96%22/%3E%3Cpath d=%22M67.5 39L83 48%22/%3E%3Cpath d=%22M39 67.5L48 83%22/%3E%3Cpath d=%22M0 78V96%22/%3E%3C/g%3E%3C/svg%3E") center/contain no-repeat}
 .h2{margin-top:16px;font:760 clamp(30px,7.4vw,72px)/1.12 var(--display);letter-spacing:-.012em;color:var(--fg);max-width:18ch;text-wrap:balance}
 .h2--xl{font-size:clamp(34px,8.6vw,96px);max-width:15ch}
 .h2--long{font-size:clamp(22px,7vw,76px)}
@@ -192,7 +193,7 @@ a:hover > .more .i,button:hover > .more .i,.more:hover .i{transform:translateX(4
 .pinb .pinb__plus{width:20px;height:20px;padding:3px;margin-right:-3px;border-radius:50%;background:var(--sun);color:var(--navy);stroke-width:2.6}
 .pinb:hover span,.pinb:focus-visible span{background:var(--blue)}
 .pins li.l .pinb{flex-direction:row-reverse}
-.estate__tip{display:inline-flex;align-items:center;gap:10px;margin-top:16px;padding:9px 14px;border-radius:999px;background:#EEF5FC;color:var(--navy);font:600 14px/1.25 var(--text)}
+.estate__tip-unused{display:inline-flex;align-items:center;gap:10px;margin-top:16px;padding:9px 14px;border-radius:999px;background:#EEF5FC;color:var(--navy);font:600 14px/1.25 var(--text)}
 .estate__tip i{width:10px;height:10px;border-radius:50%;background:var(--sun);box-shadow:0 0 0 3px rgba(252,196,28,.3);animation:pinpulse2 1.6s ease-in-out infinite}
 @keyframes pinpulse2{50%{box-shadow:0 0 0 7px rgba(252,196,28,.12)}}
 .pinsheet{padding:0}

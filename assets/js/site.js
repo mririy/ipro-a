@@ -322,12 +322,13 @@
         moving = smooth('hero', progress(rHero), k) || moving;
         if (near(rHero)) {
           /* солнце раскрывается в видео; видео остаётся, а само солнце улетает вверх в логотип */
-          var p = sm.hero, open = ease(seg(p, 0, .4)), fly = ease(seg(p, .34, .66));
+          /* видео раскрывается кругом из центра, а солнце с первого шага плавно уменьшается и улетает в логотип */
+          var p = sm.hero, open = ease(seg(p, 0, .4)), fly = ease(seg(p, .03, .62)), shrink = seg(p, .03, .62);
           var r0 = Math.min(vw, vh) * (wide ? .155 : .23), r1 = Math.hypot(vw, vh) * .62;
-          var R = lerp(r0, r1, open), S = R / .27, cx = vw / 2, cy = vh * .56;
+          var R = lerp(r0, r1, open), S = r0 / .27, cx = vw / 2, cy = vh * .56;
           if (logoBox) {  /* солнце логотипа: центр и размер вместе с лучами */
             var tx = logoBox.left + logoBox.width * .772, ty = logoBox.top + logoBox.height * .592, ts = logoBox.width * .47;
-            cx = lerp(cx, tx, fly); cy = lerp(cy, ty, fly); S = lerp(S, ts, fly);
+            cx = lerp(cx, tx, fly); cy = lerp(cy, ty, fly); S = lerp(S, ts, shrink);
           }
           var hs = heroPin.style;
           hs.setProperty('--r', R.toFixed(1) + 'px');
@@ -337,14 +338,14 @@
           hs.setProperty('--mx', (vw / 2).toFixed(1) + 'px');
           hs.setProperty('--my', (vh * .56).toFixed(1) + 'px');
           hs.setProperty('--tint', (.36 * (1 - seg(p, 0, .4))).toFixed(3));
-          hs.setProperty('--ringop', (1 - seg(p, .64, .7)).toFixed(3));
+          hs.setProperty('--ringop', (1 - seg(p, .6, .66)).toFixed(3));
           hs.setProperty('--winop', '1');
           hs.setProperty('--shade', seg(p, .5, .85).toFixed(3));
           hs.setProperty('--hint', (1 - seg(p, 0, .12)).toFixed(3));
           hs.setProperty('--eye', (1 - seg(p, .12, .36)).toFixed(3));
           hs.setProperty('--orbop', (1 - seg(p, .06, .2)).toFixed(3));
           hs.setProperty('--hop', '1');
-          if (hdLogo) hdLogo.classList.toggle('is-catch', p > .64);
+          if (hdLogo) hdLogo.classList.toggle('is-catch', p > .6);
           var spread = ease(seg(p, 0, .7));
           if (lines.length === 4) {
             lines[0].style.transform = 'translate3d(0,' + (-spread * vh * .035).toFixed(1) + 'px,0)';
