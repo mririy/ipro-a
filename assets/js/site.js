@@ -277,6 +277,7 @@
 
   /* ---------------- кадр прокрутки: сначала всё измеряем, потом всё двигаем ---------------- */
   var hero = $('.hero'), heroPin = hero && $('.pin', hero), lines = $$('.hero__h .l');
+  var hdLogo = $('.hd__logo'), logoImg = hdLogo && $('img', hdLogo), logoBox = null;  /* куда прилетает солнце */
   var colsBox = $('.cols'), cols = $$('.cols .col'), cards = $$('.stack .lvl');
   var sm = { hero: -1, estate: -1, night: -1 }, running = false, tPrev = 0;
   var progress = function (r) { return clamp(-r.top / Math.max(1, r.height - vh), 0, 1); };
@@ -293,6 +294,7 @@
     var dt = tPrev ? Math.min(64, now - tPrev) : 16.7; tPrev = now;
     var calm = still(), k = calm ? 1 : 1 - Math.pow(1 - .16, dt / 16.7), moving = false;
     /* --- измерения --- */
+    if (!logoBox && logoImg && logoImg.complete && logoImg.offsetWidth) { var lb = logoImg.getBoundingClientRect(); logoBox = { left: lb.left, top: lb.top, width: lb.width, height: lb.height }; }
     if (pinsDirty && pins.length) measurePins();
     var tone = 'dark', overHero = true;
     for (var i = scenes.length - 1; i >= 0; i--) {
@@ -319,17 +321,29 @@
       if (hero) {
         moving = smooth('hero', progress(rHero), k) || moving;
         if (near(rHero)) {
-          var p = sm.hero, open = ease(seg(p, 0, .78));
-          var r0 = Math.min(vw, vh) * (wide ? .155 : .2), r1 = Math.hypot(vw, vh) * .62, R = lerp(r0, r1, open);
+          /* туда: солнце раскрывается в видео; обратно: видео снова сжимается в солнце, и оно улетает в логотип */
+          var p = sm.hero, open = ease(seg(p, 0, .4)), close = ease(seg(p, .58, .8)), fly = ease(seg(p, .8, .96));
+          var r0 = Math.min(vw, vh) * (wide ? .155 : .2), r1 = Math.hypot(vw, vh) * .62;
+          var R = lerp(lerp(r0, r1, open), r0, close);
+          var S = R / .27, cx = vw / 2, cy = vh * .56;
+          if (logoBox) {  /* солнце логотипа: центр и размер вместе с лучами */
+            var tx = logoBox.left + logoBox.width * .772, ty = logoBox.top + logoBox.height * .592, ts = logoBox.width * .47;
+            cx = lerp(cx, tx, fly); cy = lerp(cy, ty, fly); S = lerp(S, ts, fly); R = S * .27;
+          }
           var hs = heroPin.style;
           hs.setProperty('--r', R.toFixed(1) + 'px');
-          hs.setProperty('--s', (R / .27).toFixed(1) + 'px');
-          hs.setProperty('--tint', (.36 * (1 - seg(p, 0, .4))).toFixed(3));
-          hs.setProperty('--ringop', (1 - seg(p, .45, .75)).toFixed(3));
-          hs.setProperty('--shade', seg(p, .5, .85).toFixed(3));
-          hs.setProperty('--hint', (1 - seg(p, 0, .12)).toFixed(3));
-          hs.setProperty('--eye', (1 - seg(p, .12, .36)).toFixed(3));
-          var spread = ease(seg(p, 0, .7));
+          hs.setProperty('--s', S.toFixed(1) + 'px');
+          hs.setProperty('--cx', cx.toFixed(1) + 'px');
+          hs.setProperty('--cy', cy.toFixed(1) + 'px');
+          hs.setProperty('--tint', (.36 * Math.max(1 - seg(p, 0, .25), seg(p, .62, .8))).toFixed(3));
+          hs.setProperty('--ringop', (Math.max(1 - seg(p, .28, .4), seg(p, .64, .78)) * (1 - seg(p, .965, 1))).toFixed(3));
+          hs.setProperty('--winop', (1 - seg(p, .82, .9)).toFixed(3));
+          hs.setProperty('--shade', (seg(p, .22, .4) * (1 - seg(p, .58, .72))).toFixed(3));
+          hs.setProperty('--hint', (1 - seg(p, 0, .08)).toFixed(3));
+          hs.setProperty('--eye', (1 - seg(p, .06, .18)).toFixed(3));
+          hs.setProperty('--hop', (1 - seg(p, .6, .72)).toFixed(3));
+          if (hdLogo) hdLogo.classList.toggle('is-catch', p > .955 && p < 1.01);
+          var spread = ease(seg(p, 0, .4)) * (1 - close);
           if (lines.length === 4) {
             lines[0].style.transform = 'translate3d(0,' + (-spread * vh * .035).toFixed(1) + 'px,0)';
             lines[1].style.transform = 'translate3d(' + (spread * vw * .04).toFixed(1) + 'px,' + (-spread * vh * .035).toFixed(1) + 'px,0)';
@@ -407,7 +421,7 @@
   addEventListener('resize', function () {
     vw = innerWidth; vh = innerHeight; wide = vw >= 900;
     seqs.forEach(function (s) { if (s.started) s.size(); s.drawn = -1; });
-    pinsDirty = true; stopW = -1;
+    pinsDirty = true; stopW = -1; logoBox = null;
     heads.forEach(function (h) { h.last = -1; });
     kick();
   });
@@ -419,7 +433,7 @@
     lines.forEach(function (l) { l.style.transform = ''; });
     cols.forEach(function (c) { c.style.transform = ''; });
     cards.forEach(function (c) { c.style.removeProperty('--q'); });
-    if (heroPin) ['--r', '--s', '--tint', '--ringop', '--shade', '--hint', '--eye'].forEach(function (v) { heroPin.style.removeProperty(v); });
+    if (heroPin) ['--r', '--s', '--cx', '--cy', '--tint', '--ringop', '--winop', '--shade', '--hint', '--eye', '--hop'].forEach(function (v) { heroPin.style.removeProperty(v); });
     if (estatePin) ['--headop', '--arr'].forEach(function (v) { estatePin.style.removeProperty(v); });
     if (nightPin) { ['--bye', '--cta'].forEach(function (v) { nightPin.style.removeProperty(v); }); nightPin.classList.remove('is-run', 'cta-on'); }
     seqs.forEach(function (s) { s.sleep(); });
