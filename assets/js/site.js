@@ -323,7 +323,7 @@
         if (near(rHero)) {
           /* солнце раскрывается в видео; видео остаётся, а само солнце улетает вверх в логотип */
           var p = sm.hero, open = ease(seg(p, 0, .4)), fly = ease(seg(p, .34, .66));
-          var r0 = Math.min(vw, vh) * (wide ? .155 : .2), r1 = Math.hypot(vw, vh) * .62;
+          var r0 = Math.min(vw, vh) * (wide ? .155 : .23), r1 = Math.hypot(vw, vh) * .62;
           var R = lerp(r0, r1, open), S = R / .27, cx = vw / 2, cy = vh * .56;
           if (logoBox) {  /* солнце логотипа: центр и размер вместе с лучами */
             var tx = logoBox.left + logoBox.width * .772, ty = logoBox.top + logoBox.height * .592, ts = logoBox.width * .47;
@@ -342,6 +342,7 @@
           hs.setProperty('--shade', seg(p, .5, .85).toFixed(3));
           hs.setProperty('--hint', (1 - seg(p, 0, .12)).toFixed(3));
           hs.setProperty('--eye', (1 - seg(p, .12, .36)).toFixed(3));
+          hs.setProperty('--orbop', (1 - seg(p, .06, .2)).toFixed(3));
           hs.setProperty('--hop', '1');
           if (hdLogo) hdLogo.classList.toggle('is-catch', p > .64);
           var spread = ease(seg(p, 0, .7));
@@ -434,7 +435,7 @@
     lines.forEach(function (l) { l.style.transform = ''; });
     cols.forEach(function (c) { c.style.transform = ''; });
     cards.forEach(function (c) { c.style.removeProperty('--q'); });
-    if (heroPin) ['--r', '--s', '--cx', '--cy', '--tint', '--ringop', '--winop', '--shade', '--hint', '--eye', '--hop', '--mx', '--my'].forEach(function (v) { heroPin.style.removeProperty(v); });
+    if (heroPin) ['--r', '--s', '--cx', '--cy', '--tint', '--ringop', '--winop', '--shade', '--hint', '--eye', '--hop', '--mx', '--my', '--orbop'].forEach(function (v) { heroPin.style.removeProperty(v); });
     if (estatePin) ['--headop', '--arr'].forEach(function (v) { estatePin.style.removeProperty(v); });
     if (nightPin) { ['--bye', '--cta'].forEach(function (v) { nightPin.style.removeProperty(v); }); nightPin.classList.remove('is-run', 'cta-on'); }
     seqs.forEach(function (s) { s.sleep(); });

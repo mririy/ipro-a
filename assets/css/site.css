@@ -106,6 +106,10 @@ a:hover > .more .i,button:hover > .more .i,.more:hover .i{transform:translateX(4
 .hero__tint{position:absolute;inset:0;background:var(--sun);mix-blend-mode:multiply;opacity:var(--tint,.36)}
 .hero__ring{position:absolute;left:var(--cx,50%);top:var(--cy,56%);width:var(--s,74vmin);height:var(--s,74vmin);translate:-50% -50%;overflow:visible;pointer-events:none;opacity:var(--ringop,1)}
 .hero__rays{transform-origin:0 0;animation:spin 60s linear infinite}
+/* «Инновационное образовательное пространство» — по кругу между солнцем и лучами, медленно вращается */
+.hero__orb{transform-origin:0 0;animation:spin 48s linear infinite reverse;opacity:var(--orbop,1)}
+.hero__orb text{font:600 8px var(--text);fill:#fff}
+@media (prefers-reduced-motion: no-preference){html.js:not(.a11y) .hero__eyebrow{width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}}  /* текст для экранного диктора; глазами — по кругу */
 @keyframes spin{to{transform:rotate(360deg)}}
 .hero__eyebrow{position:absolute;left:var(--gut);right:var(--gut-r);top:calc(76px + env(safe-area-inset-top,0px));font:600 17px/1.35 var(--text);color:#fff;text-shadow:0 1px 14px rgba(6,18,36,.55);opacity:var(--eye,1);z-index:2}
 .hero__eyebrow span{display:none}

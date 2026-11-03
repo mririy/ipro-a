@@ -205,6 +205,7 @@ def hero():
     <svg class="hero__ring" viewBox="-100 -100 200 200" aria-hidden="true">
       <path d="M -51.96 -30 A 60 60 0 1 1 -51.96 30" fill="none" stroke="#FCC41C" stroke-width="8" stroke-linecap="round"/>
       <g class="hero__rays" stroke="#FCC41C" stroke-width="8" stroke-linecap="round"><path d="M0 -76V-94"/><path d="M38 -65.8L47 -81.4"/><path d="M65.8 -38L81.4 -47"/><path d="M76 0H94"/><path d="M65.8 38L81.4 47"/><path d="M38 65.8L47 81.4"/><path d="M0 76V94"/></g>
+      <g class="hero__orb"><path id="orbPath" d="M0 -67A67 67 0 1 1 0 67A67 67 0 1 1 0 -67" fill="none"/><text><textPath href="#orbPath" textLength="418" lengthAdjust="spacing">{e(INTRO["eyebrow"].upper())} ·</textPath></text></g>
     </svg>
     <p class="hero__eyebrow">{e(INTRO['eyebrow'])}<span> · частная школа полного дня в Ялте</span></p>
     <h1 class="hero__h" aria-label="{e(INTRO['title1'] + ' ' + INTRO['title2'])}"><span class="row r1"><span class="l">Ребёнку</span><span class="l">интересно,</span></span><span class="row r2"><span class="l">а вам</span><span class="l acc">спокойно</span></span></h1>
