@@ -243,7 +243,7 @@ html:not(.js) .estate__fade,html.a11y .estate__fade{display:none}
 
 /* ---------- программы: карточки ступеней складываются в стопку ---------- */
 .stack{display:grid;gap:16px;margin-top:36px}
-.lvl{position:sticky;top:calc(78px + env(safe-area-inset-top,0px) + var(--i) * 14px);display:grid;place-items:center;min-height:min(74svh,640px);padding:24px;border-radius:var(--r-xl);text-decoration:none;color:#fff;background:var(--navy);box-shadow:0 -10px 40px rgba(10,44,85,.16);overflow:hidden;isolation:isolate;transform:scale(calc(1 - var(--q,0) * .05));transform-origin:50% 0}
+.lvl{position:sticky;top:calc(78px + env(safe-area-inset-top,0px));display:grid;place-items:center;min-height:min(74svh,640px);padding:24px;border-radius:var(--r-xl);text-decoration:none;color:#fff;background:var(--navy);box-shadow:0 -10px 40px rgba(10,44,85,.16);overflow:hidden;isolation:isolate;}
 .lvl__bg{position:absolute;inset:0;z-index:-2;width:100%;height:100%;object-fit:cover;transition:transform .8s var(--ease)}
 .lvl:hover .lvl__bg{transform:scale(1.04)}
 .lvl::before{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(80% 60% at 50% 50%,rgba(6,18,36,.5),rgba(6,18,36,.2) 70%),linear-gradient(180deg,rgba(6,18,36,.35),rgba(6,18,36,.15) 40%,rgba(6,18,36,.55))}
@@ -635,7 +635,7 @@ html.rv-ready .ph.rv.is-in img,html.rv-ready .ph.rv.is-in video,html.rv-ready .d
   .director{margin-inline:auto;text-align:center}
   .director blockquote::before{left:50%;translate:-50% 0}
   .stack{gap:24px}
-  .lvl{min-height:min(72svh,620px);top:calc(96px + var(--i) * 18px)}
+  .lvl{min-height:min(72svh,620px);top:96px}
   .lvl__c{max-width:none}
   .lvl__t{font-size:clamp(48px,5.6vw,84px)}
   .lvl__n{left:32px;top:28px;font-size:28px}
@@ -701,6 +701,18 @@ html:not(.js) .pins,html:not(.js) .route__bus{display:none}
 html:not(.js) .night__cta{opacity:1;translate:none;position:relative;padding-block:24px}
 html:not(.js) .hd{background:rgba(10,44,85,.94)}
 html:not(.js) .hd__menu,html:not(.js) .ask{display:none}
+
+/* ---------- мелкий текст: не меньше 14–15 px, подписи без капса и разрядки ---------- */
+.price__lbl,.pm__lvl,.label,.field > span,.kv--org dt,.ep__k{font:600 14px/1.3 var(--text);text-transform:none;letter-spacing:0}
+.hero__hint{font-size:13px;letter-spacing:.1em}
+.sb{font-size:11px}
+.alb__cap small,.news__meta,.review figcaption span,.doclink small,.drawer__phone small,.drawer__addr small,.bl li small,.person figcaption span,.album__sub,.sent p{font-size:15px}
+.tag,.note,.route__pt,.pinb span,.rating__go,.album__tabs button{font-size:14.5px}
+.field__err,.helper__foot,.guest__what,.form__note,.foot__maplink,.foot__bottom,.foot__bottom a,.foot__bottom button,.a11y-toggle,.pm__toc a,.helper__qs button,.socials a,.msgr{font-size:15px}
+.ep p,.guest p,.news__card p,.lvl__a,.dirc__cap > span:not(.more),.area,.pill,.hd__lbl,.more{font-size:15.5px}
+.kv--org dd,.docs__list li{font-size:16px}
+.pn small,.pm__bar,.drawer__cta small{font-size:14.5px}
+.pm__bar b,.drawer__cta b{font-size:16px}
 
 /* ---------- версия для слабовидящих ---------- */
 html.a11y{font-size:112.5%;scroll-behavior:auto}
